@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Classificação de Produtos</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 40px;
+      width: 480px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 22px;
+      color: #1a237e;
+      margin-bottom: 6px;
+    }
+
+    .subtitle {
+      color: #888;
+      font-size: 13px;
+      margin-bottom: 30px;
+    }
+
+    .drop-zone {
+      border: 2px dashed #90caf9;
+      border-radius: 12px;
+      padding: 36px 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #f5f9ff;
+      margin-bottom: 20px;
+    }
+
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: #1565c0;
+      background: #e3f0ff;
+    }
+
+    .drop-zone .icon { font-size: 40px; margin-bottom: 10px; }
+
+    .drop-zone p {
+      color: #555;
+      font-size: 14px;
+    }
+
+    .drop-zone span {
+      color: #1565c0;
+      font-weight: 600;
+      text-decoration: underline;
+      cursor: pointer;
+    }
+
+    #fileInput { display: none; }
+
+    .file-info {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: #e8f5e9;
+      border-radius: 8px;
+      padding: 10px 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #2e7d32;
+      font-weight: 600;
+    }
+
+    .file-info .remove {
+      margin-left: auto;
+      cursor: pointer;
+      color: #c62828;
+      font-size: 16px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #1565c0;
+      color: white;
+    }
+
+    .btn-primary:hover:not(:disabled) { background: #0d47a1; }
+
+    .btn-primary:disabled {
+      background: #b0bec5;
+      cursor: not-allowed;
+    }
+
+    .btn-success {
+      background: #2e7d32;
+      color: white;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .btn-success:hover { background: #1b5e20; }
+
+    .progress-wrap {
+      display: none;
+      margin: 16px 0;
+    }
+
+    .progress-bar-bg {
+      background: #e0e0e0;
+      border-radius: 99px;
+      height: 8px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: #1565c0;
+      border-radius: 99px;
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    .status {
+      font-size: 13px;
+      color: #555;
+      margin-top: 8px;
+    }
+
+    .stats {
+      display: none;
+      margin-top: 20px;
+      background: #f5f9ff;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    .stats h3 {
+      color: #1a237e;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 4px 0;
+      border-bottom: 1px solid #e8eaf6;
+      color: #444;
+    }
+
+    .stat-item:last-child { border-bottom: none; }
+
+    .badge {
+      font-weight: 700;
+      color: #1565c0;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+  <h1>📊 Classificação de Produtos</h1>
+  <p class="subtitle">Selecione ou arraste seu arquivo Excel para processar</p>
+
+  <!-- Drop Zone -->
+  <div class="drop-zone" id="dropZone">
+    <div class="icon">📂</div>
+    <p>Arraste o arquivo aqui ou <span onclick="document.getElementById('fileInput').click()">clique para selecionar</span></p>
+    <p style="margin-top:6px; font-size:12px; color:#aaa;">.xlsx ou .xls</p>
+  </div>
+
+  <input type="file" id="fileInput" accept=".xlsx,.xls" />
+
+  <!-- File info -->
+  <div class="file-info" id="fileInfo">
+    <span>✅</span>
+    <span id="fileName"></span>
+    <span class="remove" onclick="removerArquivo()" title="Remover">✖</span>
+  </div>
+
+  <!-- Botão processar -->
+  <button class="btn btn-primary" id="btnProcessar" disabled onclick="processar()">
+    ⚡ Processar e Baixar
+  </button>
+
+  <!-- Progress -->
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-bar-bg">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+    <div class="status" id="statusMsg">Processando...</div>
+  </div>
+
+  <!-- Botão baixar -->
+  <button class="btn btn-success" id="btnBaixar" onclick="baixar()">
+    ⬇️ Baixar Arquivo Classificado
+  </button>
+
+  <!-- Stats -->
+  <div class="stats" id="statsBox">
+    <h3>📈 Resumo da Classificação</h3>
+    <div id="statsContent"></div>
+  </div>
+</div>
+
+<script>
+  let arquivoSelecionado = null;
+  let workbookFinal = null;
+
+  // ── Drag & Drop ───────────────────────────────────────────
+  const dropZone = document.getElementById('dropZone');
+
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+  });
+
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file) setArquivo(file);
+  });
+
+  document.getElementById('fileInput').addEventListener('change', e => {
+    if (e.target.files[0]) setArquivo(e.target.files[0]);
+  });
+
+  function setArquivo(file) {
+    arquivoSelecionado = file;
+    document.getElementById('fileName').textContent = file.name;
+    document.getElementById('fileInfo').style.display = 'flex';
+    document.getElementById('btnProcessar').disabled = false;
+    document.getElementById('btnBaixar').style.display = 'none';
+    document.getElementById('statsBox').style.display = 'none';
+    document.getElementById('progressWrap').style.display = 'none';
+    workbookFinal = null;
+  }
+
+  function removerArquivo() {
+    arquivoSelecionado = null;
+    document.getElementById('fileInfo').style.display = 'none';
+    document.getElementById('btnProcessar').disabled = true;
+    document.getElementById('btnBaixar').style.display = 'none';
+    document.getElementById('statsBox').style.display = 'none';
+    document.getElementById('progressWrap').style.display = 'none';
+    document.getElementById('fileInput').value = '';
+    workbookFinal = null;
+  }
+
+  // ── Classificação ─────────────────────────────────────────
+  function classificar(c12, c13, c19) {
+    if (c12 >= 10) return "CatA - Movimentou 10-12 meses nos últimos 12";
+    if (c12 >= 7)  return "CatB - Movimentado 7-9 meses nos últimos 12";
+    if (c12 >= 4)  return "CatC - Movimentado 4-6 meses nos últimos 12";
+    if (c12 >= 1)  return "CatD - Movimentado 1-3 meses nos últimos 12";
+    if (c13 > 0)   return "CatE - Venda entre 13-18 meses";
+    if (c19 > 0)   return "CatF - Venda entre 19-24 meses";
+    return "CatG - Sem movimento";
+  }
+
+  function setProgress(pct, msg) {
+    document.getElementById('progressBar').style.width = pct + '%';
+    document.getElementById('statusMsg').textContent = msg;
+  }
+
+  async function processar() {
+    if (!arquivoSelecionado) return;
+
+    document.getElementById('btnProcessar').disabled = true;
+    document.getElementById('btnBaixar').style.display = 'none';
+    document.getElementById('statsBox').style.display = 'none';
+    document.getElementById('progressWrap').style.display = 'block';
+    setProgress(10, '📖 Lendo arquivo...');
+
+    await sleep(50);
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+      try {
+        const data = new Uint8Array(e.target.result);
+        const wb = XLSX.read(data, { type: 'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+
+        setProgress(25, '🔍 Identificando colunas...');
+        await sleep(50);
+
+        // Converte para array de arrays
+        const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+
+        // Linha 1 (índice 1) = cabeçalhos (header na linha 2 do Excel)
+        const headers = aoa[1];
+        const dataRows = aoa.slice(2);
+
+        // Encontra índice da coluna N (código mestre) — índice 13
+        const colN = 13;
+
+        // Colunas de meses: após inserção de AO e AP, meses começam em AQ = índice 42
+        const firstMonthIdx = 42;
+        const totalMeses = 24;
+
+        setProgress(40, '📊 Calculando classificação individual...');
+        await sleep(50);
+
+        const stats = {};
+
+        // ── Classificação Individual ──────────────────────
+        const classeInd = dataRows.map(row => {
+          let c12 = 0, c13 = 0, c19 = 0;
+          for (let j = 0; j < totalMeses; j++) {
+            const val = parseFloat(row[firstMonthIdx + j]);
+            if (!isNaN(val) && val > 0) {
+              if (j < 12) c12++;
+              else if (j < 18) c13++;
+              else c19++;
+            }
+          }
+          return classificar(c12, c13, c19);
+        });
+
+        setProgress(60, '🏷️ Calculando classificação mestre...');
+        await sleep(50);
+
+        // ── Agrupamento por Código Mestre ─────────────────
+        const grupos = {};
+        dataRows.forEach((row, i) => {
+          const mestre = String(row[colN] || "").trim();
+          if (!mestre) return;
+          if (!grupos[mestre]) grupos[mestre] = new Array(24).fill(0);
+          for (let j = 0; j < totalMeses; j++) {
+            const val = parseFloat(row[firstMonthIdx + j]);
+            if (!isNaN(val) && val > 0) grupos[mestre][j] = 1;
+          }
+        });
+
+        // ── Classificação Mestre ──────────────────────────
+        const classeMestre = dataRows.map((row, i) => {
+          const mestre = String(row[colN] || "").trim();
+          if (!mestre) return classeInd[i];
+          const arr = grupos[mestre];
+          const g12 = arr.slice(0, 12).reduce((a, b) => a + b, 0);
+          const g13 = arr.slice(12, 18).reduce((a, b) => a + b, 0);
+          const g19 = arr.slice(18, 24).reduce((a, b) => a + b, 0);
+          return classificar(g12, g13, g19);
+        });
+
+        setProgress(75, '✍️ Inserindo colunas no arquivo...');
+        await sleep(50);
+
+        // ── Monta novo AOA com colunas inseridas ──────────
+        // Insere "Classificação Individual" em AO (índice 40)
+        // Insere "Classificação Mestre" em AP (índice 41)
+
+        const novoAoa = aoa.map((row, rowIdx) => {
+          const newRow = [...row];
+          if (rowIdx === 1) {
+            // Cabeçalho
+            newRow.splice(40, 0, "Classificação Individual", "Classificação Mestre");
+          } else if (rowIdx >= 2) {
+            const i = rowIdx - 2;
+            newRow.splice(40, 0, classeInd[i], classeMestre[i]);
+
+            // Contagem stats
+            stats[classeMestre[i]] = (stats[classeMestre[i]] || 0) + 1;
+          } else {
+            newRow.splice(40, 0, "", "");
+          }
+          return newRow;
+        });
+
+        setProgress(90, '💾 Gerando arquivo...');
+        await sleep(50);
+
+        // ── Cria novo workbook ─────────────────────────────
+        const novoWs = XLSX.utils.aoa_to_sheet(novoAoa);
+        const novoWb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(novoWb, novoWs, wb.SheetNames[0]);
+        workbookFinal = novoWb;
+
+        setProgress(100, '✅ Concluído!');
+
+        // Stats
+        mostrarStats(stats, dataRows.length);
+
+        document.getElementById('btnBaixar').style.display = 'block';
+        document.getElementById('btnProcessar').disabled = false;
+
+      } catch (err) {
+        setProgress(0, '❌ Erro: ' + err.message);
+        document.getElementById('btnProcessar').disabled = false;
+        console.error(err);
+      }
+    };
+
+    reader.readAsArrayBuffer(arquivoSelecionado);
+  }
+
+  function mostrarStats(stats, total) {
+    const ordem = ["CatA","CatB","CatC","CatD","CatE","CatF","CatG"];
+    let html = `<div class="stat-item"><span>Total de itens</span><span class="badge">${total}</span></div>`;
+    ordem.forEach(cat => {
+      const chave = Object.keys(stats).find(k => k.startsWith(cat));
+      if (chave) {
+        const pct = ((stats[chave] / total) * 100).toFixed(1);
+        html += `<div class="stat-item"><span>${chave.split(" - ")[1] || chave}</span><span class="badge">${stats[chave]} (${pct}%)</span></div>`;
+      }
+    });
+    document.getElementById('statsContent').innerHTML = html;
+    document.getElementById('statsBox').style.display = 'block';
+  }
+
+  function baixar() {
+    if (!workbookFinal) return;
+    const nomeOriginal = arquivoSelecionado.name.replace(/\.(xlsx|xls)$/i, '');
+    XLSX.writeFile(workbookFinal, `${nomeOriginal}_CLASSIFICADO.xlsx`);
+  }
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+</script>
+</body>
+</html>
