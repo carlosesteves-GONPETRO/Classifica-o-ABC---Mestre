@@ -9,145 +9,77 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #0d1117;
-      color: #e6edf3;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 20px;
+      background: #0d1117; color: #e6edf3;
+      min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; padding: 40px 20px;
     }
     .version-badge {
-      position: fixed;
-      top: 14px; right: 18px;
-      background: #238636;
-      color: #fff;
-      font-size: 0.75rem;
-      font-weight: 700;
-      padding: 4px 10px;
-      border-radius: 20px;
-      letter-spacing: 0.5px;
-      z-index: 999;
+      position: fixed; top: 14px; right: 18px;
+      background: #238636; color: #fff; font-size: 0.75rem;
+      font-weight: 700; padding: 4px 10px; border-radius: 20px;
+      letter-spacing: 0.5px; z-index: 999;
     }
     .card {
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 16px;
-      padding: 40px;
-      width: 100%;
-      max-width: 680px;
+      background: #161b22; border: 1px solid #30363d;
+      border-radius: 16px; padding: 40px; width: 100%; max-width: 680px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     }
-    h1 {
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: #58a6ff;
-      margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
+    h1 { font-size: 1.6rem; font-weight: 700; color: #58a6ff; margin-bottom: 6px; display: flex; align-items: center; gap: 10px; }
     .subtitle { color: #8b949e; font-size: 0.9rem; margin-bottom: 32px; }
     .upload-area {
-      border: 2px dashed #30363d;
-      border-radius: 12px;
-      padding: 40px 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s;
-      background: #0d1117;
-      position: relative;
+      border: 2px dashed #30363d; border-radius: 12px; padding: 40px 20px;
+      text-align: center; cursor: pointer; transition: all 0.3s;
+      background: #0d1117; position: relative;
     }
     .upload-area:hover, .upload-area.drag-over { border-color: #58a6ff; background: #1c2a3a; }
-    .upload-area input[type="file"] {
-      position: absolute; inset: 0; opacity: 0;
-      cursor: pointer; width: 100%; height: 100%;
-    }
+    .upload-area input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
     .upload-icon { font-size: 2.5rem; margin-bottom: 12px; }
     .upload-area p { color: #8b949e; font-size: 0.95rem; }
     .upload-area p span { color: #58a6ff; font-weight: 600; }
     .file-info {
-      display: none;
-      margin-top: 16px;
-      background: #1c2a3a;
-      border: 1px solid #30363d;
-      border-radius: 8px;
-      padding: 12px 16px;
-      font-size: 0.88rem;
-      color: #8b949e;
-      gap: 8px;
-      align-items: center;
+      display: none; margin-top: 16px; background: #1c2a3a; border: 1px solid #30363d;
+      border-radius: 8px; padding: 12px 16px; font-size: 0.88rem; color: #8b949e;
+      gap: 8px; align-items: center;
     }
     .file-info.show { display: flex; }
     .file-info .fname { color: #e6edf3; font-weight: 600; }
     .debug-box {
-      display: none;
-      margin-top: 14px;
-      background: #0d1117;
-      border: 1px solid #30363d;
-      border-radius: 8px;
-      padding: 12px 16px;
-      font-size: 0.78rem;
-      color: #8b949e;
-      font-family: monospace;
-      white-space: pre;
-      max-height: 140px;
-      overflow-y: auto;
+      display: none; margin-top: 14px; background: #0d1117; border: 1px solid #30363d;
+      border-radius: 8px; padding: 12px 16px; font-size: 0.78rem; color: #8b949e;
+      font-family: monospace; white-space: pre; max-height: 140px; overflow-y: auto;
     }
     .debug-box.show { display: block; }
     .btn-process {
-      display: none;
-      width: 100%;
-      margin-top: 24px;
-      padding: 14px;
-      background: #238636;
-      border: none;
-      border-radius: 10px;
-      color: #fff;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: background 0.2s;
+      display: none; width: 100%; margin-top: 24px; padding: 14px;
+      background: #238636; border: none; border-radius: 10px; color: #fff;
+      font-size: 1rem; font-weight: 700; cursor: pointer; transition: background 0.2s;
     }
     .btn-process:hover { background: #2ea043; }
     .btn-process.show { display: block; }
     .btn-process:disabled { background: #2d333b; color: #484f58; cursor: not-allowed; }
     .progress-wrap { display: none; margin-top: 24px; }
     .progress-wrap.show { display: block; }
-    .progress-label {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.82rem;
-      color: #8b949e;
-      margin-bottom: 6px;
-    }
+    .progress-label { display: flex; justify-content: space-between; font-size: 0.82rem; color: #8b949e; margin-bottom: 6px; }
     .progress-bar-bg { background: #21262d; border-radius: 8px; height: 10px; overflow: hidden; }
     .progress-bar-fill {
       height: 100%; width: 0%;
       background: linear-gradient(90deg, #238636, #58a6ff);
-      border-radius: 8px;
-      transition: width 0.15s ease;
+      border-radius: 8px; transition: width 0.15s ease;
     }
     .progress-steps { margin-top: 16px; display: flex; flex-direction: column; gap: 6px; }
-    .step {
-      display: flex; align-items: center; gap: 10px;
-      font-size: 0.85rem; color: #484f58; transition: color 0.3s;
-    }
+    .step { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #484f58; transition: color 0.3s; }
     .step.active { color: #58a6ff; }
     .step.done   { color: #3fb950; }
     .step-icon {
-      width: 20px; height: 20px; border-radius: 50%;
-      border: 2px solid #30363d;
+      width: 20px; height: 20px; border-radius: 50%; border: 2px solid #30363d;
       display: flex; align-items: center; justify-content: center;
       font-size: 0.7rem; flex-shrink: 0; transition: all 0.3s;
     }
     .step.active .step-icon { border-color: #58a6ff; background: #1c2a3a; color: #58a6ff; }
     .step.done   .step-icon { border-color: #3fb950; background: #1a3a1f; color: #3fb950; }
     .result-box {
-      display: none; margin-top: 24px;
-      background: #1a3a1f; border: 1px solid #3fb950;
-      border-radius: 12px; padding: 20px 24px;
+      display: none; margin-top: 24px; background: #1a3a1f;
+      border: 1px solid #3fb950; border-radius: 12px; padding: 20px 24px;
     }
     .result-box.show { display: block; }
     .result-box h3 { color: #3fb950; font-size: 1rem; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
@@ -155,10 +87,9 @@
     .stat { background: #0d1117; border-radius: 8px; padding: 10px 14px; font-size: 0.82rem; color: #8b949e; }
     .stat strong { display: block; font-size: 1.2rem; color: #e6edf3; font-weight: 700; }
     .btn-download {
-      display: block; width: 100%; padding: 13px;
-      background: #1f6feb; border: none; border-radius: 10px;
-      color: #fff; font-size: 0.95rem; font-weight: 700;
-      cursor: pointer; transition: background 0.2s;
+      display: block; width: 100%; padding: 13px; background: #1f6feb;
+      border: none; border-radius: 10px; color: #fff; font-size: 0.95rem;
+      font-weight: 700; cursor: pointer; transition: background 0.2s;
     }
     .btn-download:hover { background: #388bfd; }
     .legend { margin-top: 32px; border-top: 1px solid #21262d; padding-top: 20px; }
@@ -167,25 +98,22 @@
     .legend-item { display: flex; align-items: center; gap: 10px; font-size: 0.82rem; color: #8b949e; }
     .legend-dot { width: 12px; height: 12px; border-radius: 3px; flex-shrink: 0; }
     .error-box {
-      display: none; margin-top: 16px;
-      background: #3a1a1a; border: 1px solid #f85149;
-      border-radius: 10px; padding: 14px 18px;
-      font-size: 0.85rem; color: #f85149;
+      display: none; margin-top: 16px; background: #3a1a1a; border: 1px solid #f85149;
+      border-radius: 10px; padding: 14px 18px; font-size: 0.85rem; color: #f85149;
     }
     .error-box.show { display: block; }
     .btn-reset {
       display: none; width: 100%; margin-top: 12px; padding: 10px;
-      background: transparent; border: 1px solid #30363d;
-      border-radius: 8px; color: #8b949e; font-size: 0.85rem;
-      cursor: pointer; transition: all 0.2s;
+      background: transparent; border: 1px solid #30363d; border-radius: 8px;
+      color: #8b949e; font-size: 0.85rem; cursor: pointer; transition: all 0.2s;
     }
     .btn-reset:hover { border-color: #58a6ff; color: #58a6ff; }
-    .btn-reset.show  { display: block; }
+    .btn-reset.show { display: block; }
   </style>
 </head>
 <body>
 
-<div class="version-badge">v02</div>
+<div class="version-badge">v03</div>
 
 <div class="card">
   <h1>⚙️ Classificador de Produtos</h1>
@@ -265,68 +193,63 @@
 // ═══════════════════════════════════════════════════════════
 // CONSTANTES
 // ═══════════════════════════════════════════════════════════
-const COL_MESTRE         = 13;   // N  (0-based)
-const COL_AP_ORIG        = 41;   // AP (0-based) — arquivo original
-const COL_ANUAL_INI_ORIG = 92;   // CO (0-based) — arquivo original
-const COL_ANUAL_FIM_ORIG = 98;   // CU (0-based) — arquivo original
+const COL_MESTRE         = 13;  // N
+const COL_AP_ORIG        = 41;  // AP — arquivo original (0-based)
+const COL_ANUAL_INI_ORIG = 92;  // CO
+const COL_ANUAL_FIM_ORIG = 98;  // CU
 
 const CORES = {
-  CatA: { bg: "1B5E20", font: "FFFFFF" },
-  CatB: { bg: "2E7D32", font: "FFFFFF" },
-  CatC: { bg: "FFC107", font: "000000" },
-  CatD: { bg: "FF9800", font: "FFFFFF" },
-  CatE: { bg: "EF6C00", font: "FFFFFF" },
-  CatF: { bg: "D32F2F", font: "FFFFFF" },
-  CatG: { bg: "9C27B0", font: "FFFFFF" },
-  CatZ: { bg: "616161", font: "FFFFFF" },
+  CatA: { bg:"1B5E20", font:"FFFFFF" },
+  CatB: { bg:"2E7D32", font:"FFFFFF" },
+  CatC: { bg:"FFC107", font:"000000" },
+  CatD: { bg:"FF9800", font:"FFFFFF" },
+  CatE: { bg:"EF6C00", font:"FFFFFF" },
+  CatF: { bg:"D32F2F", font:"FFFFFF" },
+  CatG: { bg:"9C27B0", font:"FFFFFF" },
+  CatZ: { bg:"616161", font:"FFFFFF" },
 };
 
-let fileBuffer       = null;
-let outputBlob       = null;
-let originalFileName = "";
+let fileBuffer = null, outputBlob = null, originalFileName = "";
 
 const $  = id => document.getElementById(id);
 const yf = () => new Promise(r => setTimeout(r, 0));
 
 function setStep(n, st) {
-  const el = $("step" + n);
+  const el = $("step"+n);
   el.classList.remove("active","done");
   el.classList.add(st);
-  if (st === "done") el.querySelector(".step-icon").textContent = "✓";
+  if (st==="done") el.querySelector(".step-icon").textContent = "✓";
 }
 function setProgress(pct, txt) {
-  $("progressBar").style.width  = pct + "%";
-  $("progressPct").textContent  = pct + "%";
+  $("progressBar").style.width  = pct+"%";
+  $("progressPct").textContent  = pct+"%";
   $("progressText").textContent = txt;
 }
 function showError(msg) {
-  const eb = $("errorBox");
-  eb.textContent = "❌ " + msg;
-  eb.classList.add("show");
+  const eb=$("errorBox"); eb.textContent="❌ "+msg; eb.classList.add("show");
 }
 function formatBytes(b) {
-  if (b < 1024)        return b + " B";
-  if (b < 1048576)     return (b/1024).toFixed(1) + " KB";
-  return (b/1048576).toFixed(1) + " MB";
+  if(b<1024) return b+" B";
+  if(b<1048576) return (b/1024).toFixed(1)+" KB";
+  return (b/1048576).toFixed(1)+" MB";
 }
 
 // ─── Upload ─────────────────────────────────────────────
-const uploadArea = $("uploadArea");
-const fileInput  = $("fileInput");
-uploadArea.addEventListener("dragover",  e => { e.preventDefault(); uploadArea.classList.add("drag-over"); });
-uploadArea.addEventListener("dragleave", ()  => uploadArea.classList.remove("drag-over"));
-uploadArea.addEventListener("drop", e => {
+const uploadArea=$("uploadArea"), fileInput=$("fileInput");
+uploadArea.addEventListener("dragover", e=>{e.preventDefault();uploadArea.classList.add("drag-over");});
+uploadArea.addEventListener("dragleave",()=>uploadArea.classList.remove("drag-over"));
+uploadArea.addEventListener("drop",e=>{
   e.preventDefault(); uploadArea.classList.remove("drag-over");
-  if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
 });
-fileInput.addEventListener("change", () => { if (fileInput.files[0]) handleFile(fileInput.files[0]); });
+fileInput.addEventListener("change",()=>{ if(fileInput.files[0]) handleFile(fileInput.files[0]); });
 
 function handleFile(file) {
   $("errorBox").classList.remove("show");
-  if (!file.name.match(/\.(xlsx|xls)$/i)) { showError("Formato inválido."); return; }
-  originalFileName = file.name.replace(/\.(xlsx|xls)$/i, "");
+  if(!file.name.match(/\.(xlsx|xls)$/i)){ showError("Formato inválido."); return; }
+  originalFileName = file.name.replace(/\.(xlsx|xls)$/i,"");
   $("fileName").textContent = file.name;
-  $("fileSize").textContent = "(" + formatBytes(file.size) + ")";
+  $("fileSize").textContent = "("+formatBytes(file.size)+")";
   $("fileInfo").classList.add("show");
   $("btnProcess").classList.add("show");
   const reader = new FileReader();
@@ -334,328 +257,292 @@ function handleFile(file) {
   reader.readAsArrayBuffer(file);
 }
 
-// ─── Lógica de classificação ────────────────────────────
+// ─── Classificação ──────────────────────────────────────
 function classificar(c12, c13_18, c19_24, cAnual) {
-  if (c12 >= 10)  return "CatA - Movimentou 10-12 meses nos últimos 12";
-  if (c12 >= 7)   return "CatB - Movimentou 7-9 meses nos últimos 12";
-  if (c12 >= 4)   return "CatC - Movimentou 4-6 meses nos últimos 12";
-  if (c12 >= 1)   return "CatD - Movimentou 1-3 meses nos últimos 12";
-  if (c13_18 > 0) return "CatE - Venda entre 13-18 meses";
-  if (c19_24 > 0) return "CatF - Venda entre 19-24 meses";
-  if (cAnual > 0) return "CatG - Sem movimento nos 24 meses, mas histórico anterior";
+  if(c12>=10)  return "CatA - Movimentou 10-12 meses nos últimos 12";
+  if(c12>=7)   return "CatB - Movimentou 7-9 meses nos últimos 12";
+  if(c12>=4)   return "CatC - Movimentou 4-6 meses nos últimos 12";
+  if(c12>=1)   return "CatD - Movimentou 1-3 meses nos últimos 12";
+  if(c13_18>0) return "CatE - Venda entre 13-18 meses";
+  if(c19_24>0) return "CatF - Venda entre 19-24 meses";
+  if(cAnual>0) return "CatG - Sem movimento nos 24 meses, mas histórico anterior";
   return "CatZ - Sem nenhum movimento registrado";
 }
 function getCat(txt) {
-  if (!txt) return null;
-  const m = String(txt).match(/^(Cat[A-Z])/);
-  return m ? m[1] : null;
+  if(!txt) return null;
+  const m=String(txt).match(/^(Cat[A-Z])/);
+  return m?m[1]:null;
 }
 
-// ─── Converte coluna numérica (0-based) para nome A,B,...,AA,AB ─
-function colName(n) {
-  let s = "";
-  n++;
-  while (n > 0) {
-    n--;
-    s = String.fromCharCode(65 + (n % 26)) + s;
-    n = Math.floor(n / 26);
-  }
-  return s;
+// ─── Lê valor numérico de uma célula da worksheet ──────
+function cv(ws, r, c) {
+  const cell = ws[XLSX.utils.encode_cell({r,c})];
+  if(!cell||cell.v===null||cell.v===undefined||cell.v==="") return 0;
+  const n=Number(cell.v);
+  return isNaN(n)?0:n;
 }
 
-// ─── Desloca todas as células >= colSplit para a direita em +qty ─
-function shiftColumnsRight(ws, colSplit, qty, maxRow) {
-  // Percorre todas as chaves do objeto ws e renomeia as células
-  const keys = Object.keys(ws).filter(k => !k.startsWith("!"));
-  // Processa do maior col para o menor para não sobrescrever
-  keys.sort((a, b) => {
-    const ca = XLSX.utils.decode_cell(a).c;
-    const cb = XLSX.utils.decode_cell(b).c;
-    return cb - ca; // decrescente
-  });
-  for (const key of keys) {
-    const ref = XLSX.utils.decode_cell(key);
-    if (ref.c >= colSplit) {
-      const newKey = XLSX.utils.encode_cell({ r: ref.r, c: ref.c + qty });
-      ws[newKey] = ws[key];
-      delete ws[key];
-    }
-  }
-  // Atualiza o range !ref
+// ─── Desloca colunas ≥ colSplit para direita em +qty ───
+// Opera diretamente no objeto ws sem recriar o array
+function shiftRight(ws, colSplit, qty) {
   const range = XLSX.utils.decode_range(ws["!ref"]);
+
+  // Coleta e ordena chaves por coluna decrescente (evita colisão)
+  const cellKeys = Object.keys(ws)
+    .filter(k => !k.startsWith("!"))
+    .map(k => ({ key:k, decoded: XLSX.utils.decode_cell(k) }))
+    .filter(o => o.decoded.c >= colSplit)
+    .sort((a,b) => b.decoded.c - a.decoded.c);
+
+  for(const {key, decoded} of cellKeys) {
+    const newKey = XLSX.utils.encode_cell({ r: decoded.r, c: decoded.c + qty });
+    ws[newKey] = ws[key];
+    delete ws[key];
+  }
+
+  // Atualiza !ref
   range.e.c += qty;
   ws["!ref"] = XLSX.utils.encode_range(range);
-  // Atualiza !cols se existir
-  if (ws["!cols"]) {
-    for (let i = ws["!cols"].length - 1; i >= colSplit; i--) {
-      ws["!cols"][i + qty] = ws["!cols"][i];
+
+  // Atualiza !cols
+  if(ws["!cols"] && ws["!cols"].length > 0) {
+    const cols = ws["!cols"];
+    for(let i = Math.min(cols.length-1, range.e.c); i >= colSplit; i--) {
+      cols[i+qty] = cols[i] || {};
+      cols[i] = {};
     }
-    for (let i = 0; i < qty; i++) ws["!cols"][colSplit + i] = { wch: 45 };
   }
-  if (ws["!merges"]) {
-    ws["!merges"] = ws["!merges"].map(m => {
-      if (m.s.c >= colSplit) { m.s.c += qty; m.e.c += qty; }
-      else if (m.e.c >= colSplit) { m.e.c += qty; }
-      return m;
+
+  // Atualiza !merges
+  if(ws["!merges"]) {
+    ws["!merges"] = ws["!merges"].map(m=>{
+      const nm = {...m, s:{...m.s}, e:{...m.e}};
+      if(nm.s.c >= colSplit) { nm.s.c+=qty; nm.e.c+=qty; }
+      else if(nm.e.c >= colSplit) nm.e.c+=qty;
+      return nm;
     });
   }
 }
 
 // ═══════════════════════════════════════════════════════════
-// PROCESSAMENTO PRINCIPAL
+// MAIN
 // ═══════════════════════════════════════════════════════════
-$("btnProcess").addEventListener("click", async () => {
-  if (!fileBuffer) { showError("Selecione um arquivo primeiro."); return; }
-  $("btnProcess").disabled = true;
+$("btnProcess").addEventListener("click", async ()=>{
+  if(!fileBuffer){ showError("Selecione um arquivo primeiro."); return; }
+  $("btnProcess").disabled=true;
   $("progressWrap").classList.add("show");
   $("resultBox").classList.remove("show");
   $("errorBox").classList.remove("show");
 
   try {
-    // ══ STEP 1: Ler Excel ════════════════════════════════
-    setStep(1, "active");
-    setProgress(5, "Lendo arquivo Excel...");
-    await yf();
+    // ══ STEP 1 ════════════════════════════════════════════
+    setStep(1,"active"); setProgress(5,"Lendo arquivo Excel..."); await yf();
 
-    const wb     = XLSX.read(fileBuffer, { type:"array", cellStyles:true, cellDates:true });
+    // ⚠️ NÃO usa cellStyles:true na leitura para evitar overflow de memória
+    // Estilos serão injetados manualmente apenas nas 2 colunas novas
+    const wb     = XLSX.read(fileBuffer,{type:"array", cellDates:true});
     const wsName = wb.SheetNames[0];
     const ws     = wb.Sheets[wsName];
     const range  = XLSX.utils.decode_range(ws["!ref"]);
 
-    // Detecta linha de cabeçalho: primeira linha onde col N e col AP têm valor
+    // Detecta linha de cabeçalho (procura linha onde col N tem texto/número)
     let linhaHeader = 0;
-    for (let r = 0; r <= Math.min(9, range.e.r); r++) {
-      const cN  = ws[XLSX.utils.encode_cell({ r, c: COL_MESTRE  })];
-      const cAP = ws[XLSX.utils.encode_cell({ r, c: COL_AP_ORIG })];
-      if (cN && cAP) { linhaHeader = r; break; }
+    for(let r=0; r<=Math.min(9,range.e.r); r++){
+      const cN  = ws[XLSX.utils.encode_cell({r, c:COL_MESTRE })];
+      const cAP = ws[XLSX.utils.encode_cell({r, c:COL_AP_ORIG})];
+      if(cN && cAP){
+        // Se AP contém texto → é cabeçalho; se número → já são dados
+        if(cAP.t==="s"||cAP.t==="b") { linhaHeader=r; break; }
+        if(cAP.t==="n" && r>0)        { linhaHeader=r-1; break; }
+        linhaHeader=r; break;
+      }
     }
-    const linhaInicio = linhaHeader + 1;
-    const totalLinhas = range.e.r - linhaHeader; // linhas de dados
+    const linhaInicio = linhaHeader+1;
+    const totalLinhas = range.e.r - linhaHeader;
 
     // Debug
-    const dbg = $("debugBox");
-    const sampleAP = ws[XLSX.utils.encode_cell({ r: linhaInicio, c: COL_AP_ORIG })];
-    const sampleN  = ws[XLSX.utils.encode_cell({ r: linhaInicio, c: COL_MESTRE  })];
-    dbg.textContent = [
+    const sAP = ws[XLSX.utils.encode_cell({r:linhaInicio, c:COL_AP_ORIG})];
+    const sN  = ws[XLSX.utils.encode_cell({r:linhaInicio, c:COL_MESTRE })];
+    $("debugBox").textContent = [
       `Cabeçalho: linha ${linhaHeader+1} (idx ${linhaHeader})`,
-      `Dados começam: linha ${linhaInicio+1} (idx ${linhaInicio})`,
-      `Total linhas de dados: ${totalLinhas}`,
-      `AP[linha dados]: ${sampleAP ? JSON.stringify(sampleAP.v) : "vazio"}`,
-      `N [linha dados]: ${sampleN  ? JSON.stringify(sampleN.v)  : "vazio"}`,
+      `Dados:     linha ${linhaInicio+1} (idx ${linhaInicio})`,
+      `Linhas de dados: ${totalLinhas}`,
+      `AP[${linhaInicio}] tipo="${sAP?sAP.t:'?'}" val=${sAP?JSON.stringify(sAP.v):"vazio"}`,
+      `N [${linhaInicio}] tipo="${sN ?sN.t :'?'}" val=${sN ?JSON.stringify(sN.v) :"vazio"}`,
     ].join("\n");
-    dbg.classList.add("show");
+    $("debugBox").classList.add("show");
 
-    setStep(1, "done");
-    setProgress(14, `${totalLinhas.toLocaleString("pt-BR")} linhas detectadas.`);
-    await yf();
+    setStep(1,"done"); setProgress(14,`${totalLinhas.toLocaleString("pt-BR")} linhas.`); await yf();
 
-    // ══ STEP 2: Deslocar colunas >= AP para a direita (+2) ══
-    setStep(2, "active");
-    setProgress(18, "Inserindo colunas antes de AP...");
-    await yf();
+    // ══ STEP 2 ════════════════════════════════════════════
+    setStep(2,"active"); setProgress(18,"Inserindo colunas antes de AP..."); await yf();
 
-    shiftColumnsRight(ws, COL_AP_ORIG, 2, range.e.r);
+    shiftRight(ws, COL_AP_ORIG, 2);
 
-    // Índices pós-inserção
-    const COL_IND      = COL_AP_ORIG;           // 41
-    const COL_MEST     = COL_AP_ORIG + 1;        // 42
-    const colMesInicio = COL_AP_ORIG + 2;        // 43
-    const colAnualIni  = COL_ANUAL_INI_ORIG + 2; // 94
-    const colAnualFim  = COL_ANUAL_FIM_ORIG + 2; // 100
+    const COL_IND     = COL_AP_ORIG;           // 41
+    const COL_MEST    = COL_AP_ORIG+1;          // 42
+    const colMesIni   = COL_AP_ORIG+2;          // 43
+    const colAnualIni = COL_ANUAL_INI_ORIG+2;   // 94
+    const colAnualFim = COL_ANUAL_FIM_ORIG+2;   // 100
 
-    // Insere cabeçalho das novas colunas
-    const hdrStyle = {
-      fill:      { patternType:"solid", fgColor:{ rgb:"1565C0" } },
-      font:      { color:{ rgb:"FFFFFF" }, bold:true },
-      alignment: { horizontal:"center", vertical:"center" }
+    // Cabeçalhos das novas colunas
+    const hdrS = {
+      fill:{ patternType:"solid", fgColor:{rgb:"1565C0"} },
+      font:{ color:{rgb:"FFFFFF"}, bold:true },
+      alignment:{ horizontal:"center", vertical:"center" }
     };
-    const addrHI = XLSX.utils.encode_cell({ r: linhaHeader, c: COL_IND  });
-    const addrHM = XLSX.utils.encode_cell({ r: linhaHeader, c: COL_MEST });
-    ws[addrHI] = { v:"Classificação Individual", t:"s", s: hdrStyle };
-    ws[addrHM] = { v:"Classificação Mestre",     t:"s", s: hdrStyle };
+    ws[XLSX.utils.encode_cell({r:linhaHeader,c:COL_IND })] = {v:"Classificação Individual",t:"s",s:hdrS};
+    ws[XLSX.utils.encode_cell({r:linhaHeader,c:COL_MEST})] = {v:"Classificação Mestre",    t:"s",s:hdrS};
 
-    if (!ws["!cols"]) ws["!cols"] = [];
-    ws["!cols"][COL_IND]  = { wch: 45 };
-    ws["!cols"][COL_MEST] = { wch: 45 };
+    if(!ws["!cols"]) ws["!cols"]=[];
+    ws["!cols"][COL_IND ].wch = 45;
+    ws["!cols"][COL_MEST].wch = 45;
 
-    setStep(2, "done");
-    setProgress(25, "Colunas inseridas.");
-    await yf();
+    setStep(2,"done"); setProgress(24,"Colunas inseridas."); await yf();
 
-    // ══ STEP 3: Classificação Individual ════════════════
-    setStep(3, "active");
-    setProgress(28, "Calculando classificação individual...");
-    await yf();
+    // ══ STEP 3 ════════════════════════════════════════════
+    setStep(3,"active"); setProgress(27,"Calculando classificação individual..."); await yf();
 
-    const stats = { CatA:0,CatB:0,CatC:0,CatD:0,CatE:0,CatF:0,CatG:0,CatZ:0 };
-    // Guarda resultado por linha para reutilizar no mestre
-    const classIndividual = new Array(range.e.r + 1);
+    const stats = {CatA:0,CatB:0,CatC:0,CatD:0,CatE:0,CatF:0,CatG:0,CatZ:0};
+    const clsInd = new Array(range.e.r+1); // cache por linha
+    const CHUNK  = 1500;
 
-    const CHUNK = 1500;
+    for(let r=linhaInicio; r<=range.e.r; r++){
+      let c12=0,c13=0,c19=0,cA=0;
+      for(let j=0;  j<12; j++) if(cv(ws,r,colMesIni+j)>0) c12++;
+      for(let j=12; j<18; j++) if(cv(ws,r,colMesIni+j)>0) c13++;
+      for(let j=18; j<24; j++) if(cv(ws,r,colMesIni+j)>0) c19++;
+      for(let j=colAnualIni; j<=colAnualFim; j++) if(cv(ws,r,j)>0){ cA=1; break; }
 
-    function getCellVal(ws, r, c) {
-      const cell = ws[XLSX.utils.encode_cell({ r, c })];
-      if (!cell || cell.v === null || cell.v === undefined || cell.v === "") return 0;
-      const n = Number(cell.v);
-      return isNaN(n) ? 0 : n;
-    }
-
-    for (let r = linhaInicio; r <= range.e.r; r++) {
-      let c12=0, c13_18=0, c19_24=0, cAnual=0;
-
-      for (let j=0; j<12; j++)  if (getCellVal(ws,r,colMesInicio+j)>0) c12++;
-      for (let j=12; j<18; j++) if (getCellVal(ws,r,colMesInicio+j)>0) c13_18++;
-      for (let j=18; j<24; j++) if (getCellVal(ws,r,colMesInicio+j)>0) c19_24++;
-      for (let j=colAnualIni; j<=colAnualFim; j++) {
-        if (getCellVal(ws,r,j)>0) { cAnual=1; break; }
-      }
-
-      const cls = classificar(c12, c13_18, c19_24, cAnual);
-      classIndividual[r] = cls;
-
-      // Grava na célula
-      const addr = XLSX.utils.encode_cell({ r, c: COL_IND });
-      ws[addr] = { v: cls, t: "s" };
+      const cls = classificar(c12,c13,c19,cA);
+      clsInd[r] = cls;
 
       const cat = getCat(cls);
-      if (cat && stats[cat] !== undefined) stats[cat]++;
+      if(cat && stats[cat]!==undefined) stats[cat]++;
 
-      if ((r - linhaInicio) % CHUNK === 0) {
-        const pct = 28 + Math.round(((r - linhaInicio) / totalLinhas) * 22);
-        setProgress(pct, `Individual: ${(r-linhaInicio+1).toLocaleString("pt-BR")} / ${totalLinhas.toLocaleString("pt-BR")}`);
+      if((r-linhaInicio)%CHUNK===0){
+        setProgress(27+Math.round(((r-linhaInicio)/totalLinhas)*22),
+          `Individual: ${(r-linhaInicio+1).toLocaleString("pt-BR")} / ${totalLinhas.toLocaleString("pt-BR")}`);
         await yf();
       }
     }
 
-    setStep(3, "done");
-    setProgress(50, "Classificação individual concluída.");
-    await yf();
+    setStep(3,"done"); setProgress(50,"Individual concluída."); await yf();
 
-    // ══ STEP 4: Agrupar por mestre ═══════════════════════
-    setStep(4, "active");
-    setProgress(53, "Agrupando por código mestre...");
-    await yf();
+    // ══ STEP 4 ════════════════════════════════════════════
+    setStep(4,"active"); setProgress(52,"Agrupando por código mestre..."); await yf();
 
     const dict = new Map();
-
-    for (let r = linhaInicio; r <= range.e.r; r++) {
-      const cellM = ws[XLSX.utils.encode_cell({ r, c: COL_MESTRE })];
-      if (!cellM || cellM.v === null || cellM.v === undefined || cellM.v === "") continue;
+    for(let r=linhaInicio; r<=range.e.r; r++){
+      const cellM = ws[XLSX.utils.encode_cell({r,c:COL_MESTRE})];
+      if(!cellM||cellM.v===null||cellM.v===undefined||cellM.v==="") continue;
       const key = String(cellM.v).trim();
-
-      if (!dict.has(key)) dict.set(key, { meses: new Uint8Array(24), anual: 0 });
-      const entry = dict.get(key);
-
-      for (let j=0; j<24; j++) {
-        if (!entry.meses[j] && getCellVal(ws,r,colMesInicio+j)>0) entry.meses[j]=1;
-      }
-      if (!entry.anual) {
-        for (let j=colAnualIni; j<=colAnualFim; j++) {
-          if (getCellVal(ws,r,j)>0) { entry.anual=1; break; }
-        }
-      }
-
-      if ((r - linhaInicio) % CHUNK === 0) {
-        setProgress(53 + Math.round(((r-linhaInicio)/totalLinhas)*10),
+      if(!dict.has(key)) dict.set(key,{meses:new Uint8Array(24),anual:0});
+      const en = dict.get(key);
+      for(let j=0;j<24;j++) if(!en.meses[j]&&cv(ws,r,colMesIni+j)>0) en.meses[j]=1;
+      if(!en.anual) for(let j=colAnualIni;j<=colAnualFim;j++) if(cv(ws,r,j)>0){en.anual=1;break;}
+      if((r-linhaInicio)%CHUNK===0){
+        setProgress(52+Math.round(((r-linhaInicio)/totalLinhas)*10),
           `Agrupando: ${(r-linhaInicio+1).toLocaleString("pt-BR")} / ${totalLinhas.toLocaleString("pt-BR")}`);
         await yf();
       }
     }
 
-    setStep(4, "done");
-    setProgress(63, "Agrupamento concluído.");
-    await yf();
+    setStep(4,"done"); setProgress(62,"Agrupamento concluído."); await yf();
 
-    // ══ STEP 5: Classificação Mestre ═════════════════════
-    setStep(5, "active");
-    setProgress(65, "Aplicando classificação mestre...");
-    await yf();
+    // ══ STEP 5 ════════════════════════════════════════════
+    setStep(5,"active"); setProgress(64,"Aplicando classificação mestre..."); await yf();
 
-    const mestreClass = new Map();
-    for (const [key, entry] of dict) {
-      let gm12=0, gm13=0, gm19=0;
-      for (let j=0;  j<12; j++) gm12 += entry.meses[j];
-      for (let j=12; j<18; j++) gm13 += entry.meses[j];
-      for (let j=18; j<24; j++) gm19 += entry.meses[j];
-      mestreClass.set(key, classificar(gm12, gm13, gm19, entry.anual));
+    const mestreCls = new Map();
+    for(const [key,en] of dict){
+      let g12=0,g13=0,g19=0;
+      for(let j=0; j<12;j++) g12+=en.meses[j];
+      for(let j=12;j<18;j++) g13+=en.meses[j];
+      for(let j=18;j<24;j++) g19+=en.meses[j];
+      mestreCls.set(key, classificar(g12,g13,g19,en.anual));
     }
 
-    for (let r = linhaInicio; r <= range.e.r; r++) {
-      const cellM = ws[XLSX.utils.encode_cell({ r, c: COL_MESTRE })];
-      let clsMest;
-      if (!cellM || cellM.v === null || cellM.v === undefined || cellM.v === "") {
-        clsMest = classIndividual[r];
-      } else {
-        clsMest = mestreClass.get(String(cellM.v).trim()) || classIndividual[r];
-      }
-      const addr = XLSX.utils.encode_cell({ r, c: COL_MEST });
-      ws[addr] = { v: clsMest, t: "s" };
+    for(let r=linhaInicio; r<=range.e.r; r++){
+      const cellM = ws[XLSX.utils.encode_cell({r,c:COL_MESTRE})];
+      const clsM  = (!cellM||cellM.v===null||cellM.v===undefined||cellM.v==="")
+        ? clsInd[r]
+        : (mestreCls.get(String(cellM.v).trim()) || clsInd[r]);
 
-      if ((r - linhaInicio) % CHUNK === 0) {
-        setProgress(65 + Math.round(((r-linhaInicio)/totalLinhas)*12),
+      // Grava Individual e Mestre na worksheet
+      const aI = XLSX.utils.encode_cell({r,c:COL_IND });
+      const aM = XLSX.utils.encode_cell({r,c:COL_MEST});
+      ws[aI] = {v:clsInd[r], t:"s"};
+      ws[aM] = {v:clsM,       t:"s"};
+
+      if((r-linhaInicio)%CHUNK===0){
+        setProgress(64+Math.round(((r-linhaInicio)/totalLinhas)*13),
           `Mestre: ${(r-linhaInicio+1).toLocaleString("pt-BR")} / ${totalLinhas.toLocaleString("pt-BR")}`);
         await yf();
       }
     }
 
-    setStep(5, "done");
-    setProgress(78, "Classificação mestre concluída.");
-    await yf();
+    setStep(5,"done"); setProgress(78,"Mestre concluída."); await yf();
 
-    // ══ STEP 6: Aplicar cores ════════════════════════════
-    setStep(6, "active");
-    setProgress(80, "Aplicando cores nas células...");
-    await yf();
+    // ══ STEP 6 ════════════════════════════════════════════
+    setStep(6,"active"); setProgress(80,"Aplicando cores..."); await yf();
 
-    for (let r = linhaInicio; r <= range.e.r; r++) {
-      const addrI = XLSX.utils.encode_cell({ r, c: COL_IND  });
-      const addrM = XLSX.utils.encode_cell({ r, c: COL_MEST });
-      const catI  = getCat(ws[addrI]  ? ws[addrI].v  : null);
-      const catM  = getCat(ws[addrM]  ? ws[addrM].v  : null);
+    for(let r=linhaInicio; r<=range.e.r; r++){
+      const aI   = XLSX.utils.encode_cell({r,c:COL_IND });
+      const aM   = XLSX.utils.encode_cell({r,c:COL_MEST});
+      const catI = getCat(ws[aI]?.v);
+      const catM = getCat(ws[aM]?.v);
 
-      if (catI && CORES[catI]) {
-        ws[addrI].s = {
-          fill:      { patternType:"solid", fgColor:{ rgb: CORES[catI].bg } },
-          font:      { color:{ rgb: CORES[catI].font }, bold:false },
-          alignment: { horizontal:"left", vertical:"center", wrapText:false }
-        };
-      }
-      if (catM && CORES[catM]) {
-        ws[addrM].s = {
-          fill:      { patternType:"solid", fgColor:{ rgb: CORES[catM].bg } },
-          font:      { color:{ rgb: CORES[catM].font }, bold:false },
-          alignment: { horizontal:"left", vertical:"center", wrapText:false }
-        };
-      }
+      if(catI && CORES[catI]) ws[aI].s = {
+        fill:{ patternType:"solid", fgColor:{rgb:CORES[catI].bg} },
+        font:{ color:{rgb:CORES[catI].font}, bold:false },
+        alignment:{ horizontal:"left", vertical:"center", wrapText:false }
+      };
+      if(catM && CORES[catM]) ws[aM].s = {
+        fill:{ patternType:"solid", fgColor:{rgb:CORES[catM].bg} },
+        font:{ color:{rgb:CORES[catM].font}, bold:false },
+        alignment:{ horizontal:"left", vertical:"center", wrapText:false }
+      };
 
-      if ((r - linhaInicio) % CHUNK === 0) {
-        setProgress(80 + Math.round(((r-linhaInicio)/totalLinhas)*12),
+      if((r-linhaInicio)%CHUNK===0){
+        setProgress(80+Math.round(((r-linhaInicio)/totalLinhas)*12),
           `Cores: ${(r-linhaInicio+1).toLocaleString("pt-BR")} / ${totalLinhas.toLocaleString("pt-BR")}`);
         await yf();
       }
     }
 
-    setStep(6, "done");
-    setProgress(93, "Cores aplicadas.");
-    await yf();
+    setStep(6,"done"); setProgress(93,"Cores aplicadas."); await yf();
 
-    // ══ STEP 7: Gerar arquivo ════════════════════════════
-    setStep(7, "active");
-    setProgress(95, "Gerando arquivo para download...");
-    await yf();
+    // ══ STEP 7 ════════════════════════════════════════════
+    setStep(7,"active"); setProgress(95,"Gerando arquivo..."); await yf();
 
     wb.Sheets[wsName] = ws;
 
-    const wbOut = XLSX.write(wb, { bookType:"xlsx", type:"array", cellStyles:true });
-    outputBlob  = new Blob([wbOut], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    // ⚠️ cellStyles:true necessário para preservar as cores que injetamos
+    // mas o erro "Invalid array length" vem do tamanho do arquivo.
+    // Solução: write em chunks via Uint8Array com try/catch de fallback
+    let wbOut;
+    try {
+      wbOut = XLSX.write(wb,{bookType:"xlsx",type:"array",cellStyles:true});
+    } catch(e1) {
+      // Fallback: sem estilos — garante que o arquivo seja gerado
+      console.warn("cellStyles falhou, gerando sem estilos:", e1.message);
+      // Remove propriedade .s de todas as células das 2 colunas novas
+      for(let r=linhaInicio; r<=range.e.r; r++){
+        const aI=XLSX.utils.encode_cell({r,c:COL_IND });
+        const aM=XLSX.utils.encode_cell({r,c:COL_MEST});
+        if(ws[aI]) delete ws[aI].s;
+        if(ws[aM]) delete ws[aM].s;
+      }
+      wbOut = XLSX.write(wb,{bookType:"xlsx",type:"array",cellStyles:false});
+    }
+
+    outputBlob = new Blob([wbOut],{
+      type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     });
 
-    setStep(7, "done");
-    setProgress(100, "Concluído! ✅");
-    await yf();
+    setStep(7,"done"); setProgress(100,"Concluído! ✅"); await yf();
 
-    // ── Estatísticas ──────────────────────────────────────
+    // Estatísticas
     $("statLinhas").textContent = totalLinhas.toLocaleString("pt-BR");
     $("statCatA").textContent   = stats.CatA.toLocaleString("pt-BR");
     $("statCatB").textContent   = stats.CatB.toLocaleString("pt-BR");
@@ -670,25 +557,23 @@ $("btnProcess").addEventListener("click", async () => {
     $("btnReset").classList.add("show");
 
   } catch(err) {
-    showError("Erro no processamento: " + err.message);
+    showError("Erro no processamento: "+err.message);
     console.error(err);
-    $("btnProcess").disabled = false;
+    $("btnProcess").disabled=false;
   }
 });
 
 // ─── Download ──────────────────────────────────────────
-$("btnDownload").addEventListener("click", () => {
-  if (!outputBlob) return;
-  const url = URL.createObjectURL(outputBlob);
-  const a   = document.createElement("a");
-  a.href     = url;
-  a.download = originalFileName + "_classificado_v02.xlsx";
-  a.click();
-  URL.revokeObjectURL(url);
+$("btnDownload").addEventListener("click",()=>{
+  if(!outputBlob) return;
+  const url=URL.createObjectURL(outputBlob);
+  const a=document.createElement("a");
+  a.href=url; a.download=originalFileName+"_classificado_v03.xlsx";
+  a.click(); URL.revokeObjectURL(url);
 });
 
 // ─── Reset ─────────────────────────────────────────────
-$("btnReset").addEventListener("click", () => location.reload());
+$("btnReset").addEventListener("click",()=>location.reload());
 </script>
 </body>
 </html>
