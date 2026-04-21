@@ -81,7 +81,7 @@
   </style>
 </head>
 <body>
-<div class="version-badge">v07</div>
+<div class="version-badge">v08</div>
 <div class="card">
   <h1>⚙️ Classificador de Produtos</h1>
   <p class="subtitle">Faça upload do Excel → processa a lógica da macro → baixe o arquivo atualizado</p>
@@ -445,8 +445,9 @@ $("btnProcess").addEventListener("click",async()=>{
     setStep(2,"active");setProgress(12,"Parseando XML da planilha...");await yf();
 
     const rows=parseSheetXML(sheetXml,sharedStrings);
-    const totalLinhas=Math.max(0, Math.max(...rows.keys()) - LINHA_INICIO + 1);
-    const maxRow=Math.max(...rows.keys());
+    const allRowsArray = Array.from(rows.keys()).filter(r => r >= LINHA_INICIO);
+    const totalLinhas = allRowsArray.length;
+    const maxRow = allRowsArray.length > 0 ? Math.max(...allRowsArray) : LINHA_INICIO;
 
     $("debugBox").textContent+=[
       "",
@@ -463,27 +464,27 @@ $("btnProcess").addEventListener("click",async()=>{
 
     const stats={CatA:0,CatB:0,CatC:0,CatD:0,CatE:0,CatF:0,CatG:0,CatZ:0};
     const clsInd=new Map();
-    const CHUNK=2000;
+    const CHUNK=Math.max(500, Math.floor(totalLinhas/10));
     let processed=0;
 
     for(let r=LINHA_INICIO;r<=maxRow;r++){
-      if(!rows.has(r)){ 
-        clsInd.set(r,"CatZ - Sem nenhum movimento registrado"); 
-        const cat=getCat("CatZ - Sem nenhum movimento registrado");
-        if(cat&&stats[cat]!==undefined) stats[cat]++;
-        continue; 
+      let cls = "CatZ - Sem nenhum movimento registrado";
+      
+      if(rows.has(r)){
+        let c12=0,c13=0,c19=0,cA=0;
+        // Usa as colunas ORIGINAIS (antes do shift) para calcular
+        for(let j=0; j<12;j++) if(getNum(rows,r,COL_AP_ORIG+j)>0) c12++;
+        for(let j=12;j<18;j++) if(getNum(rows,r,COL_AP_ORIG+j)>0) c13++;
+        for(let j=18;j<24;j++) if(getNum(rows,r,COL_AP_ORIG+j)>0) c19++;
+        for(let j=COL_ANUAL_INI_ORIG;j<=COL_ANUAL_FIM_ORIG;j++) if(getNum(rows,r,j)>0){cA=1;break;}
+        cls = classificar(c12,c13,c19,cA);
       }
-      let c12=0,c13=0,c19=0,cA=0;
-      // Usa as colunas ORIGINAIS (antes do shift) para calcular
-      for(let j=0; j<12;j++) if(getNum(rows,r,COL_AP_ORIG+j)>0) c12++;
-      for(let j=12;j<18;j++) if(getNum(rows,r,COL_AP_ORIG+j)>0) c13++;
-      for(let j=18;j<24;j++) if(getNum(rows,r,COL_AP_ORIG+j)>0) c19++;
-      for(let j=COL_ANUAL_INI_ORIG;j<=COL_ANUAL_FIM_ORIG;j++) if(getNum(rows,r,j)>0){cA=1;break;}
-      const cls=classificar(c12,c13,c19,cA);
+      
       clsInd.set(r,cls);
       const cat=getCat(cls);
       if(cat&&stats[cat]!==undefined) stats[cat]++;
       processed++;
+      
       if(processed%CHUNK===0){
         setProgress(20+Math.round((processed/totalLinhas)*15),
           `Individual: ${processed.toLocaleString("pt-BR")} / ${totalLinhas.toLocaleString("pt-BR")}`);
@@ -536,6 +537,10 @@ $("btnProcess").addEventListener("click",async()=>{
       const mest=key?(mestreCls.get(key)||ind):ind;
       clsFinal.set(r,{ind,mest});
     }
+
+    // Debug final maps
+    console.log('MAXROW', maxRow, 'LINHA_INICIO', LINHA_INICIO, 'clsFinal size', clsFinal.size);
+    console.log('Primeira entrada clsFinal:', clsFinal.get(LINHA_INICIO));
 
     setStep(5,"done");setProgress(55,"Mestre concluída.");await yf();
 
@@ -636,13 +641,15 @@ function injectStyles(stylesXml,unzipped,stylesKey){
   return catXfMap;
 }
 
-// ── Injeta células nas linhas do XML (versão simplificada) ─────────
+// ── Injeta células nas linhas do XML (versão corrigida) ─────────
 function injectCellsIntoXML(sheetXml, clsFinal, catXfMap, maxRow){
   const refIND =colLetter(COL_IND);  // "AP"
   const refMEST=colLetter(COL_MEST); // "AQ"
 
   function cellXml(ref,val,styleIdx){
     const s=styleIdx!==undefined?` s="${styleIdx}"`:"";
+    // DEBUG: Log para verificar se está gerando células
+    console.log('Gerando célula:', ref, val);
     return `<c r="${ref}" t="inlineStr"${s}><is><t>${xmlEsc(val)}</t></is></c>`;
   }
 
@@ -665,16 +672,21 @@ function injectCellsIntoXML(sheetXml, clsFinal, catXfMap, maxRow){
       return insertCellsAtPosition(part, [cI,cM])+"</row>";
     }
 
-    // Linhas de dados
+    // Linhas de dados - CORRIGIDO com garantia de valor
     if(rowIdx>=LINHA_INICIO&&rowIdx<=maxRow){
       const cls=clsFinal.get(rowIdx);
-      if(!cls) return part+"</row>";
-      const catI=getCat(cls.ind);
-      const catM=getCat(cls.mest);
+      
+      // Valores com fallback garantido
+      const indVal = cls?.ind || "DEBUG-SEM-INDIVIDUAL";
+      const mestVal = cls?.mest || "DEBUG-SEM-MESTRE";
+      
+      const catI=getCat(indVal);
+      const catM=getCat(mestVal);
       const sI=catI&&catXfMap[catI]!==undefined?catXfMap[catI]:undefined;
       const sM=catM&&catXfMap[catM]!==undefined?catXfMap[catM]:undefined;
-      const cI=cellXml(refIND+rowNum,cls.ind,sI);
-      const cM=cellXml(refMEST+rowNum,cls.mest,sM);
+      
+      const cI=cellXml(refIND+rowNum,indVal,sI);
+      const cM=cellXml(refMEST+rowNum,mestVal,sM);
       return insertCellsAtPosition(part, [cI,cM])+"</row>";
     }
 
@@ -684,15 +696,28 @@ function injectCellsIntoXML(sheetXml, clsFinal, catXfMap, maxRow){
   return rebuilt.join("");
 }
 
-// Função mais simples: insere células no final da row
+// Função melhorada para inserir células em ordem correta
 function insertCellsAtPosition(rowXml, cellsToInsert){
   const toInsert=cellsToInsert.join("");
-  // Procura o último </c> na linha e insere depois
+  
+  // Procura onde inserir as novas células (antes da primeira célula >= AR)
+  const arColRef = colLetter(COL_AP_ORIG + 2); // AR = 43
+  const regex = new RegExp(`(<c\\s[^>]*\\br="${arColRef}\\d+")`, 'i');
+  const match = rowXml.match(regex);
+  
+  if(match) {
+    // Encontrou célula AR, insere antes dela
+    const insertIndex = rowXml.indexOf(match[0]);
+    return rowXml.slice(0, insertIndex) + toInsert + rowXml.slice(insertIndex);
+  }
+  
+  // Se não encontrou AR, procura o último </c> e insere depois
   const lastCellIndex = rowXml.lastIndexOf('</c>');
   if(lastCellIndex >= 0) {
     return rowXml.slice(0, lastCellIndex + 4) + toInsert + rowXml.slice(lastCellIndex + 4);
   }
-  // Se não encontrou células, insere antes do fim da row
+  
+  // Se não encontrou nenhuma célula, insere antes do fim da row
   return rowXml + toInsert;
 }
 
@@ -701,7 +726,7 @@ $("btnDownload").addEventListener("click",()=>{
   if(!outputBlob) return;
   const url=URL.createObjectURL(outputBlob);
   const a=document.createElement("a");
-  a.href=url;a.download=originalFileName+"_classificado_v07.xlsx";
+  a.href=url;a.download=originalFileName+"_classificado_v08.xlsx";
   a.click();URL.revokeObjectURL(url);
 });
 $("btnReset").addEventListener("click",()=>location.reload());
