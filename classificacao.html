@@ -81,7 +81,7 @@
   </style>
 </head>
 <body>
-<div class="version-badge">v06</div>
+<div class="version-badge">v07</div>
 <div class="card">
   <h1>⚙️ Classificador de Produtos</h1>
   <p class="subtitle">Faça upload do Excel → processa a lógica da macro → baixe o arquivo atualizado</p>
@@ -112,8 +112,9 @@
       <div class="step" id="step3"><div class="step-icon">3</div> Calculando classificação individual</div>
       <div class="step" id="step4"><div class="step-icon">4</div> Agrupando por código mestre (col N)</div>
       <div class="step" id="step5"><div class="step-icon">5</div> Aplicando classificação mestre</div>
-      <div class="step" id="step6"><div class="step-icon">6</div> Injetando células novas no XML</div>
-      <div class="step" id="step7"><div class="step-icon">7</div> Recomprimindo e gerando download</div>
+      <div class="step" id="step6"><div class="step-icon">6</div> Deslocando colunas existentes +2</div>
+      <div class="step" id="step7"><div class="step-icon">7</div> Injetando células novas no XML</div>
+      <div class="step" id="step8"><div class="step-icon">8</div> Recomprimindo e gerando download</div>
     </div>
   </div>
 
@@ -264,7 +265,6 @@ function xmlEsc(s){
 }
 
 // ── Extrai valor numérico de uma célula XML <c r=".."><v>...</v></c>
-// Recebe o texto da célula extraído do XML
 function extractNum(cellXml){
   if(!cellXml) return 0;
   const m=cellXml.match(/<v>([\s\S]*?)<\/v>/);
@@ -274,15 +274,9 @@ function extractNum(cellXml){
 }
 
 // ── Parser de sheet XML em memória ──────────
-// Retorna Map<rowIdx, Map<colIdx, {raw,val,isStr}>>
-// APENAS lê as colunas que precisamos (meses + mestre + anuais)
-// para economizar memória — não parseia tudo
-
 function parseSheetXML(xmlStr, sharedStrings){
-  // Mapeamento de índice da linha → {colIdx→valor}
   const rows = new Map();
 
-  // Regex para cada <row r="N">...</row>
   const rowRe = /<row\s[^>]*r="(\d+)"[^>]*>([\s\S]*?)<\/row>/g;
   let rm;
   while((rm=rowRe.exec(xmlStr))!==null){
@@ -295,25 +289,20 @@ function parseSheetXML(xmlStr, sharedStrings){
     while((cm=cellRe.exec(rowXml))!==null){
       const attrs = cm[1];
       const body  = cm[2];
-      // Extrai ref "A1"
       const refM  = attrs.match(/r="([A-Z]+\d+)"/);
       if(!refM) continue;
       const ref   = refM[1];
-      // Coluna: letras antes dos dígitos
       const colStr= ref.match(/^([A-Z]+)/)[1];
       let colIdx  = 0;
       for(let i=0;i<colStr.length;i++) colIdx=colIdx*26+(colStr.charCodeAt(i)-64);
       colIdx--; // 0-based
 
-      // Tipo
       const tM    = attrs.match(/t="([^"]+)"/);
       const t     = tM?tM[1]:"n";
 
-      // Valor
       const vM    = body.match(/<v>([\s\S]*?)<\/v>/);
       let val     = vM?vM[1]:"";
 
-      // Shared string
       if(t==="s" && sharedStrings && val!==""){
         const idx=parseInt(val);
         val = sharedStrings[idx] !== undefined ? sharedStrings[idx] : val;
@@ -332,7 +321,6 @@ function parseSharedStrings(xml){
   const re=/<si>([\s\S]*?)<\/si>/g;
   let m;
   while((m=re.exec(xml))!==null){
-    // Concatena todos os <t>...</t> dentro do <si>
     const texts=[];
     const tr=/<t(?:\s[^>]*)?>([^<]*)<\/t>/g;
     let tm;
@@ -358,6 +346,52 @@ function getStr(rows,r,c){
   return cell?String(cell.val):"";
 }
 
+// ── NOVA FUNÇÃO: Desloca referências de células no XML ─────
+function shiftCellRefsInSheetXml(sheetXml, colFrom0, delta){
+  // Desloca todas as células com coluna >= colFrom0 em +delta colunas
+  return sheetXml.replace(/(<c\s[^>]*\br=")([A-Z]+)(\d+)("[^>]*>)/g, (match, p1, colLetters, rowNum, p4)=>{
+    // Converte letters para índice 0-based
+    let colIdx = 0;
+    for(let i = 0; i < colLetters.length; i++) {
+      colIdx = colIdx * 26 + (colLetters.charCodeAt(i) - 64);
+    }
+    colIdx--; // 0-based
+
+    // Se a coluna é menor que o ponto de corte, não mexe
+    if(colIdx < colFrom0) return match;
+
+    // Calcula nova coluna
+    const newColIdx = colIdx + delta;
+    const newColLetters = colLetter(newColIdx);
+    
+    return `${p1}${newColLetters}${rowNum}${p4}`;
+  });
+}
+
+// ── NOVA FUNÇÃO: Atualiza dimension ref se necessário ─────
+function updateDimensionRef(sheetXml, insertCol, deltaColumns) {
+  return sheetXml.replace(/<dimension\s+ref="([A-Z]+\d+):([A-Z]+\d+)"\s*\/>/g, (match, startRef, endRef) => {
+    // Extrai coluna final
+    const endColStr = endRef.match(/^([A-Z]+)/)[1];
+    let endColIdx = 0;
+    for(let i = 0; i < endColStr.length; i++) {
+      endColIdx = endColIdx * 26 + (endColStr.charCodeAt(i) - 64);
+    }
+    endColIdx--; // 0-based
+    
+    // Se a coluna final está após o ponto de inserção, ajusta
+    if(endColIdx >= insertCol) {
+      const newEndColIdx = endColIdx + deltaColumns;
+      const newEndColStr = colLetter(newEndColIdx);
+      const endRowNum = endRef.match(/(\d+)$/)[1];
+      const newEndRef = newEndColStr + endRowNum;
+      return `<dimension ref="${startRef}:${newEndRef}"/>`;
+    }
+    
+    return match;
+  });
+}
+
 // ═══════════════════════════════════════════
 // MAIN
 // ═══════════════════════════════════════════
@@ -377,7 +411,6 @@ $("btnProcess").addEventListener("click",async()=>{
     const unzipped=fflate.unzipSync(zipData);
 
     // Encontra a sheet principal
-    // Lê workbook.xml.rels para descobrir o arquivo da sheet1
     let sheetPath="xl/worksheets/sheet1.xml";
     const wbRelsKey=Object.keys(unzipped).find(k=>k.match(/xl\/workbook\.xml\.rels/i));
     if(wbRelsKey){
@@ -394,7 +427,7 @@ $("btnProcess").addEventListener("click",async()=>{
       sharedStrings=parseSharedStrings(ssXml);
     }
 
-    const sheetXml=dec.decode(unzipped[sheetPath]);
+    let sheetXml=dec.decode(unzipped[sheetPath]);
     const totalChars=sheetXml.length;
 
     // Debug
@@ -406,26 +439,27 @@ $("btnProcess").addEventListener("click",async()=>{
     ].join("\n");
     $("debugBox").classList.add("show");
 
-    setStep(1,"done");setProgress(12,"Arquivo descomprimido.");await yf();
+    setStep(1,"done");setProgress(10,"Arquivo descomprimido.");await yf();
 
     // ══ STEP 2: Parsear XML ═══════════════════
-    setStep(2,"active");setProgress(14,"Parseando XML da planilha...");await yf();
+    setStep(2,"active");setProgress(12,"Parseando XML da planilha...");await yf();
 
     const rows=parseSheetXML(sheetXml,sharedStrings);
-    const totalLinhas=rows.size-1; // menos o cabeçalho
+    const totalLinhas=Math.max(0, Math.max(...rows.keys()) - LINHA_INICIO + 1);
     const maxRow=Math.max(...rows.keys());
 
     $("debugBox").textContent+=[
       "",
       `Linhas no Map: ${rows.size}`,
       `MaxRow idx: ${maxRow}`,
+      `Total linhas de dados: ${totalLinhas}`,
       `N[${LINHA_INICIO}]: "${getStr(rows,LINHA_INICIO,COL_MESTRE)}"`,
     ].join("\n");
 
-    setStep(2,"done");setProgress(22,`${rows.size.toLocaleString("pt-BR")} linhas parseadas.`);await yf();
+    setStep(2,"done");setProgress(18,`${rows.size.toLocaleString("pt-BR")} linhas parseadas.`);await yf();
 
     // ══ STEP 3: Classificação Individual ══════
-    setStep(3,"active");setProgress(24,"Calculando classificação individual...");await yf();
+    setStep(3,"active");setProgress(20,"Calculando classificação individual...");await yf();
 
     const stats={CatA:0,CatB:0,CatC:0,CatD:0,CatE:0,CatF:0,CatG:0,CatZ:0};
     const clsInd=new Map();
@@ -433,28 +467,34 @@ $("btnProcess").addEventListener("click",async()=>{
     let processed=0;
 
     for(let r=LINHA_INICIO;r<=maxRow;r++){
-      if(!rows.has(r)){ clsInd.set(r,"CatZ - Sem nenhum movimento registrado"); continue; }
+      if(!rows.has(r)){ 
+        clsInd.set(r,"CatZ - Sem nenhum movimento registrado"); 
+        const cat=getCat("CatZ - Sem nenhum movimento registrado");
+        if(cat&&stats[cat]!==undefined) stats[cat]++;
+        continue; 
+      }
       let c12=0,c13=0,c19=0,cA=0;
-      for(let j=0; j<12;j++) if(getNum(rows,r,COL_MES_INI+j)>0) c12++;
-      for(let j=12;j<18;j++) if(getNum(rows,r,COL_MES_INI+j)>0) c13++;
-      for(let j=18;j<24;j++) if(getNum(rows,r,COL_MES_INI+j)>0) c19++;
-      for(let j=COL_ANUAL_INI;j<=COL_ANUAL_FIM;j++) if(getNum(rows,r,j)>0){cA=1;break;}
+      // Usa as colunas ORIGINAIS (antes do shift) para calcular
+      for(let j=0; j<12;j++) if(getNum(rows,r,COL_AP_ORIG+j)>0) c12++;
+      for(let j=12;j<18;j++) if(getNum(rows,r,COL_AP_ORIG+j)>0) c13++;
+      for(let j=18;j<24;j++) if(getNum(rows,r,COL_AP_ORIG+j)>0) c19++;
+      for(let j=COL_ANUAL_INI_ORIG;j<=COL_ANUAL_FIM_ORIG;j++) if(getNum(rows,r,j)>0){cA=1;break;}
       const cls=classificar(c12,c13,c19,cA);
       clsInd.set(r,cls);
       const cat=getCat(cls);
       if(cat&&stats[cat]!==undefined) stats[cat]++;
       processed++;
       if(processed%CHUNK===0){
-        setProgress(24+Math.round((processed/totalLinhas)*24),
+        setProgress(20+Math.round((processed/totalLinhas)*15),
           `Individual: ${processed.toLocaleString("pt-BR")} / ${totalLinhas.toLocaleString("pt-BR")}`);
         await yf();
       }
     }
 
-    setStep(3,"done");setProgress(48,"Individual concluída.");await yf();
+    setStep(3,"done");setProgress(35,"Individual concluída.");await yf();
 
     // ══ STEP 4: Agrupar por mestre ════════════
-    setStep(4,"active");setProgress(50,"Agrupando por código mestre...");await yf();
+    setStep(4,"active");setProgress(37,"Agrupando por código mestre...");await yf();
 
     const dict=new Map();
     processed=0;
@@ -463,20 +503,21 @@ $("btnProcess").addEventListener("click",async()=>{
       if(!key) continue;
       if(!dict.has(key)) dict.set(key,{meses:new Uint8Array(24),anual:0});
       const en=dict.get(key);
-      for(let j=0;j<24;j++) if(!en.meses[j]&&getNum(rows,r,COL_MES_INI+j)>0) en.meses[j]=1;
-      if(!en.anual) for(let j=COL_ANUAL_INI;j<=COL_ANUAL_FIM;j++) if(getNum(rows,r,j)>0){en.anual=1;break;}
+      // Usa colunas ORIGINAIS
+      for(let j=0;j<24;j++) if(!en.meses[j]&&getNum(rows,r,COL_AP_ORIG+j)>0) en.meses[j]=1;
+      if(!en.anual) for(let j=COL_ANUAL_INI_ORIG;j<=COL_ANUAL_FIM_ORIG;j++) if(getNum(rows,r,j)>0){en.anual=1;break;}
       processed++;
       if(processed%CHUNK===0){
-        setProgress(50+Math.round((processed/totalLinhas)*10),
+        setProgress(37+Math.round((processed/totalLinhas)*8),
           `Agrupando: ${processed.toLocaleString("pt-BR")} / ${totalLinhas.toLocaleString("pt-BR")}`);
         await yf();
       }
     }
 
-    setStep(4,"done");setProgress(60,"Agrupamento concluído.");await yf();
+    setStep(4,"done");setProgress(45,"Agrupamento concluído.");await yf();
 
     // ══ STEP 5: Classificação Mestre ══════════
-    setStep(5,"active");setProgress(62,"Aplicando classificação mestre...");await yf();
+    setStep(5,"active");setProgress(47,"Aplicando classificação mestre...");await yf();
 
     const mestreCls=new Map();
     for(const [key,en] of dict){
@@ -496,36 +537,42 @@ $("btnProcess").addEventListener("click",async()=>{
       clsFinal.set(r,{ind,mest});
     }
 
-    setStep(5,"done");setProgress(72,"Mestre concluída.");await yf();
+    setStep(5,"done");setProgress(55,"Mestre concluída.");await yf();
 
-    // ══ STEP 6: Injetar células no XML ════════
-    setStep(6,"active");setProgress(74,"Injetando células no XML...");await yf();
+    // ══ STEP 6: Deslocar colunas existentes +2 ██████████
+    setStep(6,"active");setProgress(57,"Deslocando colunas existentes +2...");await yf();
 
-    // Monta styleSheet para as 2 novas colunas
-    // Precisamos adicionar fills/fonts/xfs no styles.xml
-    const stylesKey=Object.keys(unzipped).find(k=>k.match(/styles\.xml/i));
-    let stylesXml=stylesKey?dec.decode(unzipped[stylesKey]):"";
+    // SHIFT: todas as células >= COL_AP_ORIG são movidas +2 colunas
+    sheetXml = shiftCellRefsInSheetXml(sheetXml, COL_AP_ORIG, 2);
+    
+    // Atualiza dimension se necessário
+    sheetXml = updateDimensionRef(sheetXml, COL_AP_ORIG, 2);
+
+    setStep(6,"done");setProgress(65,"Colunas deslocadas.");await yf();
+
+    // ══ STEP 7: Injetar células novas no XML ══
+    setStep(7,"active");setProgress(67,"Injetando células novas no XML...");await yf();
 
     // Injeta styles e obtém mapa cat→xfIdx
+    const stylesKey=Object.keys(unzipped).find(k=>k.match(/styles\.xml/i));
+    let stylesXml=stylesKey?dec.decode(unzipped[stylesKey]):"";
     const catXfMap=injectStyles(stylesXml,unzipped,stylesKey);
 
-    // Agora percorre o XML da sheet linha por linha e injeta as 2 células novas
-    // Estratégia: split por </row> e para cada linha de dados insere antes do </row>
+    // Agora injeta as 2 células novas (AP/AQ) - as originais foram movidas para AR+
     const newSheetXml=injectCellsIntoXML(sheetXml,clsFinal,catXfMap,maxRow);
-
     unzipped[sheetPath]=enc.encode(newSheetXml);
 
-    setStep(6,"done");setProgress(88,"XML atualizado.");await yf();
+    setStep(7,"done");setProgress(80,"XML atualizado.");await yf();
 
-    // ══ STEP 7: Recomprimir ═══════════════════
-    setStep(7,"active");setProgress(90,"Recomprimindo...");await yf();
+    // ══ STEP 8: Recomprimir ═══════════════════
+    setStep(8,"active");setProgress(85,"Recomprimindo...");await yf();
 
     const zipped=fflate.zipSync(unzipped,{level:6});
     outputBlob=new Blob([zipped],{
       type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     });
 
-    setStep(7,"done");setProgress(100,"Concluído! ✅");await yf();
+    setStep(8,"done");setProgress(100,"Concluído! ✅");await yf();
 
     $("statLinhas").textContent=totalLinhas.toLocaleString("pt-BR");
     $("statCatA").textContent=stats.CatA.toLocaleString("pt-BR");
@@ -548,28 +595,21 @@ $("btnProcess").addEventListener("click",async()=>{
 
 // ── Injeta fills/fonts/xfs no styles.xml ────
 function injectStyles(stylesXml,unzipped,stylesKey){
-  // Retorna mapa cat→styleIndex
-  // Adiciona 1 fill + 1 xf por categoria (8 cats)
   const catXfMap={};
 
   if(!stylesKey||!stylesXml){
-    // Sem styles.xml — cria um mínimo
     return catXfMap;
   }
 
-  // Conta fills existentes
   const fillsM=stylesXml.match(/<fills count="(\d+)"/);
   let fillCount=fillsM?parseInt(fillsM[1]):2;
 
-  // Conta fonts existentes
   const fontsM=stylesXml.match(/<fonts count="(\d+)"/);
   let fontCount=fontsM?parseInt(fontsM[1]):1;
 
-  // Conta xfs (cellXfs)
   const xfsM=stylesXml.match(/<cellXfs count="(\d+)"/);
   let xfCount=xfsM?parseInt(xfsM[1]):1;
 
-  // Monta novos fills
   let newFills="";
   let newFonts="";
   let newXfs="";
@@ -577,78 +617,39 @@ function injectStyles(stylesXml,unzipped,stylesKey){
 
   cats.forEach((cat,i)=>{
     const {bg,font}=CORES[cat];
-    // fill
     newFills+=`<fill><patternFill patternType="solid"><fgColor rgb="${bg}"/><bgColor indexed="64"/></patternFill></fill>`;
-    // font
     newFonts+=`<font><color rgb="${font}"/><name val="Calibri"/><sz val="11"/></font>`;
-    // xf: aponta para o novo fill e font
     newXfs+=`<xf numFmtId="0" fontId="${fontCount+i}" fillId="${fillCount+i}" borderId="0" xfId="0" applyFont="1" applyFill="1"><alignment horizontal="left" vertical="center" wrapText="0"/></xf>`;
     catXfMap[cat]=xfCount+i;
   });
 
-  // Injeta fills
-  stylesXml=stylesXml.replace(/<fills count="(\d+)">/,
-    `<fills count="${fillCount+cats.length}">`);
+  stylesXml=stylesXml.replace(/<fills count="(\d+)">/,`<fills count="${fillCount+cats.length}">`);
   stylesXml=stylesXml.replace(/<\/fills>/,newFills+"</fills>");
 
-  // Injeta fonts
-  stylesXml=stylesXml.replace(/<fonts count="(\d+)">/,
-    `<fonts count="${fontCount+cats.length}">`);
+  stylesXml=stylesXml.replace(/<fonts count="(\d+)">/,`<fonts count="${fontCount+cats.length}">`);
   stylesXml=stylesXml.replace(/<\/fonts>/,newFonts+"</fonts>");
 
-  // Injeta xfs
-  stylesXml=stylesXml.replace(/<cellXfs count="(\d+)">/,
-    `<cellXfs count="${xfCount+cats.length}">`);
+  stylesXml=stylesXml.replace(/<cellXfs count="(\d+)">/,`<cellXfs count="${xfCount+cats.length}">`);
   stylesXml=stylesXml.replace(/<\/cellXfs>/,newXfs+"</cellXfs>");
 
   unzipped[stylesKey]=enc.encode(stylesXml);
   return catXfMap;
 }
 
-// ── Injeta células nas linhas do XML ─────────
+// ── Injeta células nas linhas do XML (versão simplificada) ─────────
 function injectCellsIntoXML(sheetXml, clsFinal, catXfMap, maxRow){
-  // Para cada linha de dados, insere 2 células novas (COL_IND=AP, COL_MEST=AQ)
-  // antes das células que foram deslocadas (antiga AP agora está em AR)
-  // Estratégia: processa linha por linha via regex replace
-
   const refIND =colLetter(COL_IND);  // "AP"
   const refMEST=colLetter(COL_MEST); // "AQ"
 
-  // Cabeçalhos: insere na linha LINHA_HEADER+1 (row r="2")
-  const hdrRow=LINHA_HEADER+1; // 2
-
-  // Função que gera XML de célula string inline (sem shared strings)
   function cellXml(ref,val,styleIdx){
     const s=styleIdx!==undefined?` s="${styleIdx}"`:"";
     return `<c r="${ref}" t="inlineStr"${s}><is><t>${xmlEsc(val)}</t></is></c>`;
   }
 
-  // Substitui cada <row r="N"> inserindo as células novas
-  const result=sheetXml.replace(/<row(\s[^>]*)>/g,(match,attrs)=>{
-    const rm=attrs.match(/\br="(\d+)"/);
-    if(!rm) return match;
-    const rowNum=parseInt(rm[1]);
-    const rowIdx=rowNum-1; // 0-based
-
-    // Linha de cabeçalho
-    if(rowIdx===LINHA_HEADER){
-      // Já tratamos depois via </row> injection abaixo
-    }
-    return match;
-  });
-
-  // Abordagem mais robusta: split por linha
-  // Processa o XML dividindo nas tags <row ...> e </row>
-  let out="";
-  let pos=0;
-  const rowEndRe=/<\/row>/g;
-  const rowStartRe=/<row\s[^>]*r="(\d+)"[^>]*>/g;
-
-  // Rebuild completo linha por linha
-  // Split em </row>
+  // Split por </row> e processa linha por linha
   const parts=sheetXml.split("</row>");
   const rebuilt=parts.map((part,pi)=>{
-    if(pi===parts.length-1) return part; // após última </row>
+    if(pi===parts.length-1) return part; // última parte (após última </row>)
 
     // Extrai r="N" desta row
     const rm=part.match(/<row[^>]+\br="(\d+)"/);
@@ -659,15 +660,9 @@ function injectCellsIntoXML(sheetXml, clsFinal, catXfMap, maxRow){
 
     // Cabeçalho
     if(rowIdx===LINHA_HEADER){
-      const cI=cellXml(refIND+(rowNum),"Classificação Individual");
-      const cM=cellXml(refMEST+(rowNum),"Classificação Mestre");
-      // Insere antes de </row> (que foi removido pelo split)
-      // Mas precisa inserir na posição correta (antes de AP original)
-      // Como já fizemos o shift no XLSX, o XML original NÃO tem AP deslocado
-      // pois estamos trabalhando no XML original — precisamos inserir E deslocar
-      // ⚠️ IMPORTANTE: o XML original ainda tem AP na col 41
-      // Inserimos as 2 novas células e o restante já está correto no XML
-      return insertCellsBeforeCol(part, rowNum, COL_AP_ORIG, [cI,cM])+"</row>";
+      const cI=cellXml(refIND+rowNum,"Classificação Individual");
+      const cM=cellXml(refMEST+rowNum,"Classificação Mestre");
+      return insertCellsAtPosition(part, [cI,cM])+"</row>";
     }
 
     // Linhas de dados
@@ -680,7 +675,7 @@ function injectCellsIntoXML(sheetXml, clsFinal, catXfMap, maxRow){
       const sM=catM&&catXfMap[catM]!==undefined?catXfMap[catM]:undefined;
       const cI=cellXml(refIND+rowNum,cls.ind,sI);
       const cM=cellXml(refMEST+rowNum,cls.mest,sM);
-      return insertCellsBeforeCol(part, rowNum, COL_AP_ORIG, [cI,cM])+"</row>";
+      return insertCellsAtPosition(part, [cI,cM])+"</row>";
     }
 
     return part+"</row>";
@@ -689,31 +684,16 @@ function injectCellsIntoXML(sheetXml, clsFinal, catXfMap, maxRow){
   return rebuilt.join("");
 }
 
-// Insere células XML antes da primeira célula com coluna >= colSplit
-function insertCellsBeforeCol(rowXml, rowNum, colSplit, cellsToInsert){
-  const splitLetter=colLetter(colSplit);
-  // Encontra a primeira célula com ref >= colSplit na linha
-  // Procura <c r="AP..." ou além
-  const re=/<c\s[^>]*r="([A-Z]+)(\d+)"/g;
-  let m, insertPos=-1;
-  while((m=re.exec(rowXml))!==null){
-    const col=m[1];
-    // Compara col lexicograficamente (funciona se mesmo comprimento)
-    // Converte para índice
-    let idx=0;
-    for(let i=0;i<col.length;i++) idx=idx*26+(col.charCodeAt(i)-64);
-    idx--; // 0-based
-    if(idx>=colSplit){
-      insertPos=m.index;
-      break;
-    }
-  }
+// Função mais simples: insere células no final da row
+function insertCellsAtPosition(rowXml, cellsToInsert){
   const toInsert=cellsToInsert.join("");
-  if(insertPos>=0){
-    return rowXml.slice(0,insertPos)+toInsert+rowXml.slice(insertPos);
+  // Procura o último </c> na linha e insere depois
+  const lastCellIndex = rowXml.lastIndexOf('</c>');
+  if(lastCellIndex >= 0) {
+    return rowXml.slice(0, lastCellIndex + 4) + toInsert + rowXml.slice(lastCellIndex + 4);
   }
-  // Se não achou, insere antes de </row> (já removido pelo split, então no fim)
-  return rowXml+toInsert;
+  // Se não encontrou células, insere antes do fim da row
+  return rowXml + toInsert;
 }
 
 // ── Download ────────────────────────────────
@@ -721,7 +701,7 @@ $("btnDownload").addEventListener("click",()=>{
   if(!outputBlob) return;
   const url=URL.createObjectURL(outputBlob);
   const a=document.createElement("a");
-  a.href=url;a.download=originalFileName+"_classificado_v06.xlsx";
+  a.href=url;a.download=originalFileName+"_classificado_v07.xlsx";
   a.click();URL.revokeObjectURL(url);
 });
 $("btnReset").addEventListener("click",()=>location.reload());
