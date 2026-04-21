@@ -113,7 +113,7 @@
 </head>
 <body>
 
-<div class="version-badge">v03</div>
+<div class="version-badge">v04</div>
 
 <div class="card">
   <h1>⚙️ Classificador de Produtos</h1>
@@ -193,10 +193,10 @@
 // ═══════════════════════════════════════════════════════════
 // CONSTANTES
 // ═══════════════════════════════════════════════════════════
-const COL_MESTRE         = 13;  // N
-const COL_AP_ORIG        = 41;  // AP — arquivo original (0-based)
-const COL_ANUAL_INI_ORIG = 92;  // CO
-const COL_ANUAL_FIM_ORIG = 98;  // CU
+const COL_MESTRE         = 13;   // N  (0-based)
+const COL_AP_ORIG        = 41;   // AP (0-based) — arquivo original
+const COL_ANUAL_INI_ORIG = 92;   // CO (0-based)
+const COL_ANUAL_FIM_ORIG = 98;   // CU (0-based)
 
 const CORES = {
   CatA: { bg:"1B5E20", font:"FFFFFF" },
@@ -218,7 +218,7 @@ function setStep(n, st) {
   const el = $("step"+n);
   el.classList.remove("active","done");
   el.classList.add(st);
-  if (st==="done") el.querySelector(".step-icon").textContent = "✓";
+  if(st==="done") el.querySelector(".step-icon").textContent = "✓";
 }
 function setProgress(pct, txt) {
   $("progressBar").style.width  = pct+"%";
@@ -226,7 +226,9 @@ function setProgress(pct, txt) {
   $("progressText").textContent = txt;
 }
 function showError(msg) {
-  const eb=$("errorBox"); eb.textContent="❌ "+msg; eb.classList.add("show");
+  const eb=$("errorBox");
+  eb.textContent = "❌ "+msg;
+  eb.classList.add("show");
 }
 function formatBytes(b) {
   if(b<1024) return b+" B";
@@ -258,65 +260,67 @@ function handleFile(file) {
 }
 
 // ─── Classificação ──────────────────────────────────────
-function classificar(c12, c13_18, c19_24, cAnual) {
+function classificar(c12, c13, c19, cA) {
   if(c12>=10)  return "CatA - Movimentou 10-12 meses nos últimos 12";
   if(c12>=7)   return "CatB - Movimentou 7-9 meses nos últimos 12";
   if(c12>=4)   return "CatC - Movimentou 4-6 meses nos últimos 12";
   if(c12>=1)   return "CatD - Movimentou 1-3 meses nos últimos 12";
-  if(c13_18>0) return "CatE - Venda entre 13-18 meses";
-  if(c19_24>0) return "CatF - Venda entre 19-24 meses";
-  if(cAnual>0) return "CatG - Sem movimento nos 24 meses, mas histórico anterior";
+  if(c13>0)    return "CatE - Venda entre 13-18 meses";
+  if(c19>0)    return "CatF - Venda entre 19-24 meses";
+  if(cA>0)     return "CatG - Sem movimento nos 24 meses, mas histórico anterior";
   return "CatZ - Sem nenhum movimento registrado";
 }
 function getCat(txt) {
   if(!txt) return null;
-  const m=String(txt).match(/^(Cat[A-Z])/);
-  return m?m[1]:null;
+  const m = String(txt).match(/^(Cat[A-Z])/);
+  return m ? m[1] : null;
 }
 
-// ─── Lê valor numérico de uma célula da worksheet ──────
+// ─── Lê valor numérico de célula ────────────────────────
 function cv(ws, r, c) {
   const cell = ws[XLSX.utils.encode_cell({r,c})];
-  if(!cell||cell.v===null||cell.v===undefined||cell.v==="") return 0;
-  const n=Number(cell.v);
-  return isNaN(n)?0:n;
+  if(!cell || cell.v===null || cell.v===undefined || cell.v==="") return 0;
+  const n = Number(cell.v);
+  return isNaN(n) ? 0 : n;
 }
 
-// ─── Desloca colunas ≥ colSplit para direita em +qty ───
-// Opera diretamente no objeto ws sem recriar o array
+// ─── Desloca colunas ≥ colSplit para direita (+qty) ─────
 function shiftRight(ws, colSplit, qty) {
   const range = XLSX.utils.decode_range(ws["!ref"]);
 
-  // Coleta e ordena chaves por coluna decrescente (evita colisão)
-  const cellKeys = Object.keys(ws)
+  // Ordena por coluna decrescente para não sobrescrever
+  const entries = Object.keys(ws)
     .filter(k => !k.startsWith("!"))
-    .map(k => ({ key:k, decoded: XLSX.utils.decode_cell(k) }))
-    .filter(o => o.decoded.c >= colSplit)
-    .sort((a,b) => b.decoded.c - a.decoded.c);
+    .map(k => ({ k, d: XLSX.utils.decode_cell(k) }))
+    .filter(o => o.d.c >= colSplit)
+    .sort((a,b) => b.d.c - a.d.c);
 
-  for(const {key, decoded} of cellKeys) {
-    const newKey = XLSX.utils.encode_cell({ r: decoded.r, c: decoded.c + qty });
-    ws[newKey] = ws[key];
-    delete ws[key];
+  for(const {k, d} of entries) {
+    ws[XLSX.utils.encode_cell({r:d.r, c:d.c+qty})] = ws[k];
+    delete ws[k];
   }
 
-  // Atualiza !ref
   range.e.c += qty;
   ws["!ref"] = XLSX.utils.encode_range(range);
 
-  // Atualiza !cols
-  if(ws["!cols"] && ws["!cols"].length > 0) {
-    const cols = ws["!cols"];
-    for(let i = Math.min(cols.length-1, range.e.c); i >= colSplit; i--) {
-      cols[i+qty] = cols[i] || {};
-      cols[i] = {};
-    }
+  // ── Corrige !cols ──────────────────────────────────────
+  // Garante que o array existe e tem entradas suficientes
+  if(!ws["!cols"]) ws["!cols"] = [];
+  // Preenche posições undefined com {} para evitar holes
+  for(let i = ws["!cols"].length; i <= range.e.c; i++) ws["!cols"][i] = ws["!cols"][i] || {};
+  // Desloca do fim para colSplit
+  for(let i = range.e.c - qty; i >= colSplit; i--) {
+    ws["!cols"][i+qty] = ws["!cols"][i] || {};
+    ws["!cols"][i]     = {};
   }
+  // As 2 novas colunas recebem largura 45
+  ws["!cols"][colSplit]   = { wch: 45 };
+  ws["!cols"][colSplit+1] = { wch: 45 };
 
-  // Atualiza !merges
+  // ── Corrige !merges ───────────────────────────────────
   if(ws["!merges"]) {
-    ws["!merges"] = ws["!merges"].map(m=>{
-      const nm = {...m, s:{...m.s}, e:{...m.e}};
+    ws["!merges"] = ws["!merges"].map(m => {
+      const nm = { s:{r:m.s.r,c:m.s.c}, e:{r:m.e.r,c:m.e.c} };
       if(nm.s.c >= colSplit) { nm.s.c+=qty; nm.e.c+=qty; }
       else if(nm.e.c >= colSplit) nm.e.c+=qty;
       return nm;
@@ -329,35 +333,33 @@ function shiftRight(ws, colSplit, qty) {
 // ═══════════════════════════════════════════════════════════
 $("btnProcess").addEventListener("click", async ()=>{
   if(!fileBuffer){ showError("Selecione um arquivo primeiro."); return; }
-  $("btnProcess").disabled=true;
+  $("btnProcess").disabled = true;
   $("progressWrap").classList.add("show");
   $("resultBox").classList.remove("show");
   $("errorBox").classList.remove("show");
 
   try {
+
     // ══ STEP 1 ════════════════════════════════════════════
     setStep(1,"active"); setProgress(5,"Lendo arquivo Excel..."); await yf();
 
-    // ⚠️ NÃO usa cellStyles:true na leitura para evitar overflow de memória
-    // Estilos serão injetados manualmente apenas nas 2 colunas novas
-    const wb     = XLSX.read(fileBuffer,{type:"array", cellDates:true});
+    const wb     = XLSX.read(fileBuffer, { type:"array", cellDates:true });
     const wsName = wb.SheetNames[0];
     const ws     = wb.Sheets[wsName];
     const range  = XLSX.utils.decode_range(ws["!ref"]);
 
-    // Detecta linha de cabeçalho (procura linha onde col N tem texto/número)
+    // Detecta linha de cabeçalho
     let linhaHeader = 0;
     for(let r=0; r<=Math.min(9,range.e.r); r++){
       const cN  = ws[XLSX.utils.encode_cell({r, c:COL_MESTRE })];
       const cAP = ws[XLSX.utils.encode_cell({r, c:COL_AP_ORIG})];
       if(cN && cAP){
-        // Se AP contém texto → é cabeçalho; se número → já são dados
-        if(cAP.t==="s"||cAP.t==="b") { linhaHeader=r; break; }
-        if(cAP.t==="n" && r>0)        { linhaHeader=r-1; break; }
+        if(cAP.t==="s") { linhaHeader=r; break; }
+        if(cAP.t==="n" && r>0) { linhaHeader=r-1; break; }
         linhaHeader=r; break;
       }
     }
-    const linhaInicio = linhaHeader+1;
+    const linhaInicio = linhaHeader + 1;
     const totalLinhas = range.e.r - linhaHeader;
 
     // Debug
@@ -372,56 +374,56 @@ $("btnProcess").addEventListener("click", async ()=>{
     ].join("\n");
     $("debugBox").classList.add("show");
 
-    setStep(1,"done"); setProgress(14,`${totalLinhas.toLocaleString("pt-BR")} linhas.`); await yf();
+    setStep(1,"done");
+    setProgress(14, `${totalLinhas.toLocaleString("pt-BR")} linhas detectadas.`);
+    await yf();
 
     // ══ STEP 2 ════════════════════════════════════════════
     setStep(2,"active"); setProgress(18,"Inserindo colunas antes de AP..."); await yf();
 
     shiftRight(ws, COL_AP_ORIG, 2);
 
+    // Índices pós-inserção
     const COL_IND     = COL_AP_ORIG;           // 41
-    const COL_MEST    = COL_AP_ORIG+1;          // 42
-    const colMesIni   = COL_AP_ORIG+2;          // 43
-    const colAnualIni = COL_ANUAL_INI_ORIG+2;   // 94
-    const colAnualFim = COL_ANUAL_FIM_ORIG+2;   // 100
+    const COL_MEST    = COL_AP_ORIG + 1;        // 42
+    const colMesIni   = COL_AP_ORIG + 2;        // 43
+    const colAnualIni = COL_ANUAL_INI_ORIG + 2; // 94
+    const colAnualFim = COL_ANUAL_FIM_ORIG + 2; // 100
 
     // Cabeçalhos das novas colunas
-    const hdrS = {
-      fill:{ patternType:"solid", fgColor:{rgb:"1565C0"} },
-      font:{ color:{rgb:"FFFFFF"}, bold:true },
-      alignment:{ horizontal:"center", vertical:"center" }
+    ws[XLSX.utils.encode_cell({r:linhaHeader, c:COL_IND })] = {
+      v:"Classificação Individual", t:"s",
+      s:{ fill:{patternType:"solid",fgColor:{rgb:"1565C0"}}, font:{color:{rgb:"FFFFFF"},bold:true}, alignment:{horizontal:"center"} }
     };
-    ws[XLSX.utils.encode_cell({r:linhaHeader,c:COL_IND })] = {v:"Classificação Individual",t:"s",s:hdrS};
-    ws[XLSX.utils.encode_cell({r:linhaHeader,c:COL_MEST})] = {v:"Classificação Mestre",    t:"s",s:hdrS};
-
-    if(!ws["!cols"]) ws["!cols"]=[];
-    ws["!cols"][COL_IND ].wch = 45;
-    ws["!cols"][COL_MEST].wch = 45;
+    ws[XLSX.utils.encode_cell({r:linhaHeader, c:COL_MEST})] = {
+      v:"Classificação Mestre", t:"s",
+      s:{ fill:{patternType:"solid",fgColor:{rgb:"1565C0"}}, font:{color:{rgb:"FFFFFF"},bold:true}, alignment:{horizontal:"center"} }
+    };
 
     setStep(2,"done"); setProgress(24,"Colunas inseridas."); await yf();
 
     // ══ STEP 3 ════════════════════════════════════════════
     setStep(3,"active"); setProgress(27,"Calculando classificação individual..."); await yf();
 
-    const stats = {CatA:0,CatB:0,CatC:0,CatD:0,CatE:0,CatF:0,CatG:0,CatZ:0};
-    const clsInd = new Array(range.e.r+1); // cache por linha
+    const stats  = {CatA:0,CatB:0,CatC:0,CatD:0,CatE:0,CatF:0,CatG:0,CatZ:0};
+    const clsInd = new Array(range.e.r + 1);
     const CHUNK  = 1500;
 
     for(let r=linhaInicio; r<=range.e.r; r++){
-      let c12=0,c13=0,c19=0,cA=0;
+      let c12=0, c13=0, c19=0, cA=0;
       for(let j=0;  j<12; j++) if(cv(ws,r,colMesIni+j)>0) c12++;
       for(let j=12; j<18; j++) if(cv(ws,r,colMesIni+j)>0) c13++;
       for(let j=18; j<24; j++) if(cv(ws,r,colMesIni+j)>0) c19++;
       for(let j=colAnualIni; j<=colAnualFim; j++) if(cv(ws,r,j)>0){ cA=1; break; }
 
-      const cls = classificar(c12,c13,c19,cA);
+      const cls = classificar(c12, c13, c19, cA);
       clsInd[r] = cls;
 
       const cat = getCat(cls);
       if(cat && stats[cat]!==undefined) stats[cat]++;
 
       if((r-linhaInicio)%CHUNK===0){
-        setProgress(27+Math.round(((r-linhaInicio)/totalLinhas)*22),
+        setProgress(27+Math.round(((r-linhaInicio)/totalLinhas)*23),
           `Individual: ${(r-linhaInicio+1).toLocaleString("pt-BR")} / ${totalLinhas.toLocaleString("pt-BR")}`);
         await yf();
       }
@@ -441,6 +443,7 @@ $("btnProcess").addEventListener("click", async ()=>{
       const en = dict.get(key);
       for(let j=0;j<24;j++) if(!en.meses[j]&&cv(ws,r,colMesIni+j)>0) en.meses[j]=1;
       if(!en.anual) for(let j=colAnualIni;j<=colAnualFim;j++) if(cv(ws,r,j)>0){en.anual=1;break;}
+
       if((r-linhaInicio)%CHUNK===0){
         setProgress(52+Math.round(((r-linhaInicio)/totalLinhas)*10),
           `Agrupando: ${(r-linhaInicio+1).toLocaleString("pt-BR")} / ${totalLinhas.toLocaleString("pt-BR")}`);
@@ -468,27 +471,24 @@ $("btnProcess").addEventListener("click", async ()=>{
         ? clsInd[r]
         : (mestreCls.get(String(cellM.v).trim()) || clsInd[r]);
 
-      // Grava Individual e Mestre na worksheet
-      const aI = XLSX.utils.encode_cell({r,c:COL_IND });
-      const aM = XLSX.utils.encode_cell({r,c:COL_MEST});
-      ws[aI] = {v:clsInd[r], t:"s"};
-      ws[aM] = {v:clsM,       t:"s"};
+      ws[XLSX.utils.encode_cell({r,c:COL_IND })] = {v:clsInd[r], t:"s"};
+      ws[XLSX.utils.encode_cell({r,c:COL_MEST})] = {v:clsM,       t:"s"};
 
       if((r-linhaInicio)%CHUNK===0){
-        setProgress(64+Math.round(((r-linhaInicio)/totalLinhas)*13),
+        setProgress(64+Math.round(((r-linhaInicio)/totalLinhas)*14),
           `Mestre: ${(r-linhaInicio+1).toLocaleString("pt-BR")} / ${totalLinhas.toLocaleString("pt-BR")}`);
         await yf();
       }
     }
 
-    setStep(5,"done"); setProgress(78,"Mestre concluída."); await yf();
+    setStep(5,"done"); setProgress(79,"Mestre concluída."); await yf();
 
     // ══ STEP 6 ════════════════════════════════════════════
-    setStep(6,"active"); setProgress(80,"Aplicando cores..."); await yf();
+    setStep(6,"active"); setProgress(81,"Aplicando cores..."); await yf();
 
     for(let r=linhaInicio; r<=range.e.r; r++){
-      const aI   = XLSX.utils.encode_cell({r,c:COL_IND });
-      const aM   = XLSX.utils.encode_cell({r,c:COL_MEST});
+      const aI  = XLSX.utils.encode_cell({r,c:COL_IND });
+      const aM  = XLSX.utils.encode_cell({r,c:COL_MEST});
       const catI = getCat(ws[aI]?.v);
       const catM = getCat(ws[aM]?.v);
 
@@ -504,7 +504,7 @@ $("btnProcess").addEventListener("click", async ()=>{
       };
 
       if((r-linhaInicio)%CHUNK===0){
-        setProgress(80+Math.round(((r-linhaInicio)/totalLinhas)*12),
+        setProgress(81+Math.round(((r-linhaInicio)/totalLinhas)*11),
           `Cores: ${(r-linhaInicio+1).toLocaleString("pt-BR")} / ${totalLinhas.toLocaleString("pt-BR")}`);
         await yf();
       }
@@ -517,23 +517,19 @@ $("btnProcess").addEventListener("click", async ()=>{
 
     wb.Sheets[wsName] = ws;
 
-    // ⚠️ cellStyles:true necessário para preservar as cores que injetamos
-    // mas o erro "Invalid array length" vem do tamanho do arquivo.
-    // Solução: write em chunks via Uint8Array com try/catch de fallback
     let wbOut;
     try {
-      wbOut = XLSX.write(wb,{bookType:"xlsx",type:"array",cellStyles:true});
+      wbOut = XLSX.write(wb, { bookType:"xlsx", type:"array", cellStyles:true });
     } catch(e1) {
-      // Fallback: sem estilos — garante que o arquivo seja gerado
-      console.warn("cellStyles falhou, gerando sem estilos:", e1.message);
-      // Remove propriedade .s de todas as células das 2 colunas novas
+      // Fallback sem estilos — garante geração do arquivo
+      console.warn("Fallback sem estilos:", e1.message);
       for(let r=linhaInicio; r<=range.e.r; r++){
         const aI=XLSX.utils.encode_cell({r,c:COL_IND });
         const aM=XLSX.utils.encode_cell({r,c:COL_MEST});
         if(ws[aI]) delete ws[aI].s;
         if(ws[aM]) delete ws[aM].s;
       }
-      wbOut = XLSX.write(wb,{bookType:"xlsx",type:"array",cellStyles:false});
+      wbOut = XLSX.write(wb, { bookType:"xlsx", type:"array", cellStyles:false });
     }
 
     outputBlob = new Blob([wbOut],{
@@ -542,7 +538,7 @@ $("btnProcess").addEventListener("click", async ()=>{
 
     setStep(7,"done"); setProgress(100,"Concluído! ✅"); await yf();
 
-    // Estatísticas
+    // ── Estatísticas
     $("statLinhas").textContent = totalLinhas.toLocaleString("pt-BR");
     $("statCatA").textContent   = stats.CatA.toLocaleString("pt-BR");
     $("statCatB").textContent   = stats.CatB.toLocaleString("pt-BR");
@@ -559,17 +555,19 @@ $("btnProcess").addEventListener("click", async ()=>{
   } catch(err) {
     showError("Erro no processamento: "+err.message);
     console.error(err);
-    $("btnProcess").disabled=false;
+    $("btnProcess").disabled = false;
   }
 });
 
 // ─── Download ──────────────────────────────────────────
 $("btnDownload").addEventListener("click",()=>{
   if(!outputBlob) return;
-  const url=URL.createObjectURL(outputBlob);
-  const a=document.createElement("a");
-  a.href=url; a.download=originalFileName+"_classificado_v03.xlsx";
-  a.click(); URL.revokeObjectURL(url);
+  const url = URL.createObjectURL(outputBlob);
+  const a   = document.createElement("a");
+  a.href = url;
+  a.download = originalFileName+"_classificado_v04.xlsx";
+  a.click();
+  URL.revokeObjectURL(url);
 });
 
 // ─── Reset ─────────────────────────────────────────────
