@@ -81,7 +81,7 @@
   </style>
 </head>
 <body>
-<div class="version-badge">v08</div>
+<div class="version-badge">v09</div>
 <div class="card">
   <h1>⚙️ Classificador de Produtos</h1>
   <p class="subtitle">Faça upload do Excel → processa a lógica da macro → baixe o arquivo atualizado</p>
@@ -155,18 +155,19 @@
 // CONFIGURAÇÃO
 // ═══════════════════════════════════════════
 const COL_MESTRE         = 13;  // N  (0-based)
-const COL_AP_ORIG        = 41;  // AP (0-based)
-const COL_ANUAL_INI_ORIG = 92;  // CO
-const COL_ANUAL_FIM_ORIG = 98;  // CU
+const COL_AP_ORIG        = 41;  // AP = "Estratégico" (0-based) — ponto de inserção/deslocamento das colunas novas
+const COL_MESES_ORIG     = 42;  // AQ = primeiro mês real ("Agosto/2026"), início da janela de 24 meses
+const COL_ANUAL_INI_ORIG = 93;  // CP = "Consumo 2026" (início dos 7 campos anuais)
+const COL_ANUAL_FIM_ORIG = 99;  // CV = "Consumo 2020" (fim dos 7 campos anuais)
 const LINHA_HEADER       = 1;   // índice 0-based da linha de cabeçalho
 const LINHA_INICIO       = 2;   // índice 0-based da primeira linha de dados
 
 // Colunas pós-inserção (+2)
 const COL_IND     = 41;  // nova: Classificação Individual
 const COL_MEST    = 42;  // nova: Classificação Mestre
-const COL_MES_INI = 43;  // primeira coluna de meses (era AP=41, agora 43)
-const COL_ANUAL_INI = 94;
-const COL_ANUAL_FIM = 100;
+const COL_MES_INI = 44;  // primeira coluna de meses (era AQ=42, agora 44)
+const COL_ANUAL_INI = 95;
+const COL_ANUAL_FIM = 101;
 
 // Cores ARGB para o XML do xlsx
 const CORES = {
@@ -473,9 +474,9 @@ $("btnProcess").addEventListener("click",async()=>{
       if(rows.has(r)){
         let c12=0,c13=0,c19=0,cA=0;
         // Usa as colunas ORIGINAIS (antes do shift) para calcular
-        for(let j=0; j<12;j++) if(getNum(rows,r,COL_AP_ORIG+j)>0) c12++;
-        for(let j=12;j<18;j++) if(getNum(rows,r,COL_AP_ORIG+j)>0) c13++;
-        for(let j=18;j<24;j++) if(getNum(rows,r,COL_AP_ORIG+j)>0) c19++;
+        for(let j=0; j<12;j++) if(getNum(rows,r,COL_MESES_ORIG+j)>0) c12++;
+        for(let j=12;j<18;j++) if(getNum(rows,r,COL_MESES_ORIG+j)>0) c13++;
+        for(let j=18;j<24;j++) if(getNum(rows,r,COL_MESES_ORIG+j)>0) c19++;
         for(let j=COL_ANUAL_INI_ORIG;j<=COL_ANUAL_FIM_ORIG;j++) if(getNum(rows,r,j)>0){cA=1;break;}
         cls = classificar(c12,c13,c19,cA);
       }
@@ -505,7 +506,7 @@ $("btnProcess").addEventListener("click",async()=>{
       if(!dict.has(key)) dict.set(key,{meses:new Uint8Array(24),anual:0});
       const en=dict.get(key);
       // Usa colunas ORIGINAIS
-      for(let j=0;j<24;j++) if(!en.meses[j]&&getNum(rows,r,COL_AP_ORIG+j)>0) en.meses[j]=1;
+      for(let j=0;j<24;j++) if(!en.meses[j]&&getNum(rows,r,COL_MESES_ORIG+j)>0) en.meses[j]=1;
       if(!en.anual) for(let j=COL_ANUAL_INI_ORIG;j<=COL_ANUAL_FIM_ORIG;j++) if(getNum(rows,r,j)>0){en.anual=1;break;}
       processed++;
       if(processed%CHUNK===0){
@@ -726,7 +727,7 @@ $("btnDownload").addEventListener("click",()=>{
   if(!outputBlob) return;
   const url=URL.createObjectURL(outputBlob);
   const a=document.createElement("a");
-  a.href=url;a.download=originalFileName+"_classificado_v08.xlsx";
+  a.href=url;a.download=originalFileName+"_classificado_v09.xlsx";
   a.click();URL.revokeObjectURL(url);
 });
 $("btnReset").addEventListener("click",()=>location.reload());
